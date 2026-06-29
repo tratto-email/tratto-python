@@ -1,7 +1,7 @@
 from typing import Optional
 
 from .._http import HttpClient
-from ..types import AudienceRule, CreateAudienceOptions
+from ..types import CreateAudienceOptions
 
 
 class AudiencesResource:
