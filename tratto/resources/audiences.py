@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Optional
+from typing import List, Optional
 
 from .._http import HttpClient
 from ..types import CreateAudienceOptions
@@ -52,7 +52,7 @@ class AudiencesResource:
         """Get a single audience, including its segmentation rules."""
         return self._http._request("GET", f"/v1/audiences/{audience_id}")
 
-    def add_contacts(self, audience_id: str, contact_ids: list[str]) -> dict:
+    def add_contacts(self, audience_id: str, contact_ids: List[str]) -> dict:
         """Add contacts to an audience (up to 500 per call).
 
         Returns::
