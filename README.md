@@ -427,6 +427,231 @@ while True:
 
 ---
 
+## Framework integrations
+
+### Django
+
+Add the API key to your settings and initialise a shared client:
+
+```python
+# settings.py
+TRATTO_API_KEY = env("TRATTO_API_KEY")  # e.g. via django-environ
+```
+
+```python
+# emails.py
+from django.conf import settings
+from tratto import Tratto, SendEmailOptions, TrattoError
+
+_client = Tratto(settings.TRATTO_API_KEY)
+
+
+def send_welcome_email(user) -> str:
+    """Send a welcome email and return the Tratto email ID."""
+    result = _client.emails.send(SendEmailOptions(
+        from_="Acme <hello@acme.com>",
+        to=user.email,
+        subject=f"Welcome, {user.first_name}!",
+        template_id=settings.TRATTO_WELCOME_TEMPLATE_ID,
+        variables={"first_name": user.first_name},
+    ))
+    return result["id"]
+```
+
+```python
+# views.py
+from django.contrib.auth import login
+from django.http import JsonResponse
+from .emails import send_welcome_email
+from tratto import TrattoError
+
+def register(request):
+    # ... create user ...
+    try:
+        email_id = send_welcome_email(user)
+    except TrattoError as e:
+        # Log but don't block registration
+        logger.error("Welcome email failed: %s", e)
+    return JsonResponse({"id": user.pk})
+```
+
+For long-running background jobs (bulk sends, campaign triggers) use
+[Celery](https://docs.celeryq.dev/) so the HTTP request doesn't block:
+
+```python
+# tasks.py
+from celery import shared_task
+from tratto import Tratto, SendEmailOptions
+from django.conf import settings
+
+@shared_task(bind=True, max_retries=3, default_retry_delay=30)
+def send_order_confirmation(self, user_email: str, order_id: str):
+    client = Tratto(settings.TRATTO_API_KEY)
+    try:
+        client.emails.send(SendEmailOptions(
+            from_="orders@acme.com",
+            to=user_email,
+            subject=f"Order {order_id} confirmed",
+            template_id=settings.TRATTO_ORDER_TEMPLATE_ID,
+            variables={"order_id": order_id},
+        ))
+    except Exception as exc:
+        raise self.retry(exc=exc)
+```
+
+---
+
+### FastAPI
+
+Use `lifespan` to create the client once at startup and inject it via
+dependency injection:
+
+```python
+# main.py
+import os
+from contextlib import asynccontextmanager
+from fastapi import FastAPI, BackgroundTasks, Depends, HTTPException
+from tratto import Tratto, SendEmailOptions, TrattoError
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    app.state.tratto = Tratto(os.environ["TRATTO_API_KEY"])
+    yield
+
+app = FastAPI(lifespan=lifespan)
+
+
+def get_tratto(request) -> Tratto:
+    return request.app.state.tratto
+
+
+@app.post("/users/{user_id}/welcome")
+async def send_welcome(
+    user_id: str,
+    background_tasks: BackgroundTasks,
+    client: Tratto = Depends(get_tratto),
+):
+    """Queue a welcome email in the background so the response is instant."""
+    def _send():
+        try:
+            client.emails.send(SendEmailOptions(
+                from_="hello@acme.com",
+                to=f"{user_id}@example.com",
+                subject="Welcome!",
+                html="<p>Thanks for joining.</p>",
+            ))
+        except TrattoError as e:
+            # Replace with your logger
+            print(f"Email failed: {e}")
+
+    background_tasks.add_task(_send)
+    return {"status": "queued"}
+```
+
+For high-throughput endpoints run the blocking `urlopen` call in a thread pool
+so it doesn't hold the event loop:
+
+```python
+import asyncio
+from functools import partial
+
+@app.post("/orders/{order_id}/confirm")
+async def confirm_order(
+    order_id: str,
+    client: Tratto = Depends(get_tratto),
+):
+    send = partial(
+        client.emails.send,
+        SendEmailOptions(
+            from_="orders@acme.com",
+            to="customer@example.com",
+            subject=f"Order {order_id} confirmed",
+            template_id="tmpl_order",
+            variables={"order_id": order_id},
+        ),
+    )
+    result = await asyncio.get_event_loop().run_in_executor(None, send)
+    return {"email_id": result["id"]}
+```
+
+---
+
+### Flask
+
+Store the client on the application context using Flask's `g` or as a module-
+level singleton:
+
+```python
+# extensions.py
+import os
+from tratto import Tratto
+
+tratto = Tratto(os.environ["TRATTO_API_KEY"])
+```
+
+```python
+# app.py
+from flask import Flask, jsonify
+from tratto import SendEmailOptions, TrattoError
+from .extensions import tratto
+
+app = Flask(__name__)
+
+
+@app.post("/register")
+def register():
+    # ... create user ...
+    try:
+        result = tratto.emails.send(SendEmailOptions(
+            from_="hello@acme.com",
+            to=user["email"],
+            subject="Welcome!",
+            html=f"<p>Hi {user['name']}, thanks for signing up!</p>",
+        ))
+        app.logger.info("Welcome email sent: %s", result["id"])
+    except TrattoError as e:
+        app.logger.error("Email failed [%s]: %s", e.code, e)
+    return jsonify({"id": user["id"]}), 201
+```
+
+For production workloads pair Flask with [Celery](https://docs.celeryq.dev/)
+or [RQ](https://python-rq.org/) to send emails asynchronously:
+
+```python
+# tasks.py (RQ example)
+from tratto import Tratto, SendEmailOptions
+import os
+
+def send_password_reset(email: str, reset_url: str):
+    client = Tratto(os.environ["TRATTO_API_KEY"])
+    client.emails.send(SendEmailOptions(
+        from_="no-reply@acme.com",
+        to=email,
+        subject="Reset your password",
+        html=f'<p><a href="{reset_url}">Reset password</a></p>',
+    ))
+```
+
+```python
+# view that enqueues the task
+from flask import request, jsonify
+from redis import Redis
+from rq import Queue
+from .tasks import send_password_reset
+
+q = Queue(connection=Redis())
+
+@app.post("/password-reset")
+def request_password_reset():
+    email = request.json["email"]
+    reset_url = generate_reset_url(email)  # your logic
+    q.enqueue(send_password_reset, email, reset_url)
+    return jsonify({"status": "sent"}), 202
+```
+
+---
+
 ## API reference
 
 ### `Tratto(api_key, base_url?)`
