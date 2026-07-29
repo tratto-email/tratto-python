@@ -1,4 +1,3 @@
-from typing import Optional
 
 from .._http import HttpClient
 from ..types import CreateCampaignOptions
@@ -31,9 +30,9 @@ class CampaignsResource:
     def list(
         self,
         *,
-        status: Optional[str] = None,
-        limit: Optional[int] = None,
-        after: Optional[str] = None,
+        status: str | None = None,
+        limit: int | None = None,
+        after: str | None = None,
     ) -> dict:
         """List campaigns.
 
@@ -77,7 +76,7 @@ class CampaignsResource:
         """
         return self._http._request("GET", f"/v1/campaigns/{campaign_id}/stats")
 
-    def send(self, campaign_id: str, *, scheduled_at: Optional[str] = None) -> dict:
+    def send(self, campaign_id: str, *, scheduled_at: str | None = None) -> dict:
         """Send or schedule a campaign.
 
         Only campaigns in *draft* or *paused* status can be sent.

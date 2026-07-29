@@ -1,4 +1,3 @@
-from typing import Optional
 
 from .._http import HttpClient
 
@@ -27,8 +26,8 @@ class DomainsResource:
     def list(
         self,
         *,
-        limit: Optional[int] = None,
-        after: Optional[str] = None,
+        limit: int | None = None,
+        after: str | None = None,
     ) -> dict:
         """List all registered sender domains."""
         return self._http._request(

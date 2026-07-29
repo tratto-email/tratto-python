@@ -1,6 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Literal, Optional, Union
-
+from typing import Literal
 
 # ── Errors ────────────────────────────────────────────────────────────────────
 
@@ -33,39 +32,39 @@ class SendEmailOptions:
     Accepts either ``'user@domain.com'`` or ``'Display Name <user@domain.com>'``.
     """
 
-    to: Union[str, list[str]]
+    to: str | list[str]
     """Recipient address(es)."""
 
     subject: str
     """Email subject line (max 998 characters)."""
 
-    html: Optional[str] = None
+    html: str | None = None
     """HTML body."""
 
-    text: Optional[str] = None
+    text: str | None = None
     """Plain-text body."""
 
-    reply_to: Optional[str] = None
+    reply_to: str | None = None
     """Reply-to address."""
 
-    cc: Optional[Union[str, list[str]]] = None
-    bcc: Optional[Union[str, list[str]]] = None
-    headers: Optional[dict[str, str]] = None
+    cc: str | list[str] | None = None
+    bcc: str | list[str] | None = None
+    headers: dict[str, str] | None = None
     """Custom email headers."""
 
-    tags: Optional[list[str]] = None
+    tags: list[str] | None = None
     """Free-form tags for filtering and analytics."""
 
-    template_id: Optional[str] = None
+    template_id: str | None = None
     """ID of a saved template to render."""
 
-    variables: Optional[dict[str, object]] = None
+    variables: dict[str, object] | None = None
     """Template variables (used with *template_id*)."""
 
-    scheduled_at: Optional[str] = None
+    scheduled_at: str | None = None
     """ISO-8601 datetime to delay delivery. Omit to send immediately."""
 
-    idempotency_key: Optional[str] = None
+    idempotency_key: str | None = None
     """UUID for idempotent sends. Duplicate requests with the same key return
     the original response without sending a second email."""
 
@@ -80,8 +79,8 @@ class CreateContactOptions:
     """Options for creating a contact."""
 
     email: str
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
+    first_name: str | None = None
+    last_name: str | None = None
     status: str = "subscribed"
     tags: list[str] = field(default_factory=list)
     custom_fields: dict[str, object] = field(default_factory=dict)
@@ -91,12 +90,12 @@ class CreateContactOptions:
 class UpdateContactOptions:
     """Options for updating a contact. Only supplied fields are changed."""
 
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
-    status: Optional[str] = None
+    first_name: str | None = None
+    last_name: str | None = None
+    status: str | None = None
     """One of ``subscribed``, ``unsubscribed``, ``bounced``, ``complained``."""
-    tags: Optional[list[str]] = None
-    custom_fields: Optional[dict[str, object]] = None
+    tags: list[str] | None = None
+    custom_fields: dict[str, object] | None = None
 
 
 # ── Audience types ────────────────────────────────────────────────────────────
@@ -117,7 +116,7 @@ class AudienceRule:
     """Comparison operator. One of: ``equals``, ``not_equals``, ``contains``,
     ``not_contains``, ``array_contains``."""
 
-    value: Union[str, int, bool]
+    value: str | int | bool
     """Value to compare against."""
 
 
@@ -126,8 +125,8 @@ class CreateAudienceOptions:
     """Options for creating an audience."""
 
     name: str
-    description: Optional[str] = None
-    rules: Optional[list[AudienceRule]] = None
+    description: str | None = None
+    rules: list[AudienceRule] | None = None
     """Optional segmentation rules. Contacts matching all rules are auto-added."""
 
 
@@ -154,9 +153,9 @@ class UpdateTemplateOptions:
     Changing *html* automatically creates a new version.
     """
 
-    name: Optional[str] = None
-    html: Optional[str] = None
-    status: Optional[str] = None
+    name: str | None = None
+    html: str | None = None
+    status: str | None = None
     """Set to ``'published'`` to make the template available for campaigns."""
 
 
@@ -187,7 +186,7 @@ class CreateCampaignOptions:
     subject_a: str
     """Primary subject line (max 998 characters)."""
 
-    subject_b: Optional[str] = None
+    subject_b: str | None = None
     """Alternate subject line for A/B testing (max 998 characters)."""
 
 
