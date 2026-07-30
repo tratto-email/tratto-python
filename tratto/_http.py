@@ -1,8 +1,7 @@
 import json
-from typing import Optional
-from urllib.request import Request, urlopen
 from urllib.error import HTTPError
 from urllib.parse import urlencode
+from urllib.request import Request, urlopen
 
 from .types import TrattoError
 
@@ -22,9 +21,9 @@ class HttpClient:
         method: str,
         path: str,
         *,
-        body: Optional[dict] = None,
-        params: Optional[dict] = None,
-        extra_headers: Optional[dict[str, str]] = None,
+        body: dict | None = None,
+        params: dict | None = None,
+        extra_headers: dict[str, str] | None = None,
     ) -> dict:
         url = f"{self._base_url}{path}"
         if params:
@@ -51,7 +50,7 @@ class HttpClient:
             try:
                 payload = json.loads(e.read())
                 err = payload.get("error", {})
-            except Exception:
+            except Exception:  # noqa: BLE001 — error body may not be valid JSON at all
                 err = {}
             raise TrattoError(
                 err.get("message", str(e)),
@@ -66,7 +65,7 @@ class HttpClient:
         *,
         body: bytes,
         content_type: str,
-        extra_headers: Optional[dict[str, str]] = None,
+        extra_headers: dict[str, str] | None = None,
     ) -> dict:
         url = f"{self._base_url}{path}"
         headers: dict[str, str] = {
@@ -87,7 +86,7 @@ class HttpClient:
             try:
                 payload = json.loads(e.read())
                 err = payload.get("error", {})
-            except Exception:
+            except Exception:  # noqa: BLE001 — error body may not be valid JSON at all
                 err = {}
             raise TrattoError(
                 err.get("message", str(e)),

@@ -1,4 +1,3 @@
-from typing import Optional
 
 from .._http import HttpClient
 from ..types import CreateContactOptions, UpdateContactOptions
@@ -32,11 +31,11 @@ class ContactsResource:
     def list(
         self,
         *,
-        status: Optional[str] = None,
-        audience_id: Optional[str] = None,
-        tag: Optional[str] = None,
-        limit: Optional[int] = None,
-        after: Optional[str] = None,
+        status: str | None = None,
+        audience_id: str | None = None,
+        tag: str | None = None,
+        limit: int | None = None,
+        after: str | None = None,
     ) -> dict:
         """List contacts with optional filters.
 

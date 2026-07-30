@@ -1,4 +1,3 @@
-from typing import Optional
 
 from .._http import HttpClient
 from ..types import SendEmailOptions
@@ -64,13 +63,13 @@ class EmailsResource:
     def list(
         self,
         *,
-        status: Optional[str] = None,
-        limit: Optional[int] = None,
-        after: Optional[str] = None,
-        domain_id: Optional[str] = None,
-        tags: Optional[str] = None,
-        date_from: Optional[str] = None,
-        date_to: Optional[str] = None,
+        status: str | None = None,
+        limit: int | None = None,
+        after: str | None = None,
+        domain_id: str | None = None,
+        tags: str | None = None,
+        date_from: str | None = None,
+        date_to: str | None = None,
     ) -> dict:
         """List emails with optional filters.
 

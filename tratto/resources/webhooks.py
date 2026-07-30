@@ -1,4 +1,3 @@
-from typing import Optional
 
 from .._http import HttpClient
 from ..types import CreateWebhookOptions
@@ -40,8 +39,8 @@ class WebhooksResource:
         self,
         webhook_id: str,
         *,
-        limit: Optional[int] = None,
-        after: Optional[str] = None,
+        limit: int | None = None,
+        after: str | None = None,
     ) -> dict:
         """List delivery history for a webhook (most recent first).
 

@@ -6,8 +6,8 @@ from .types import (
     CreateContactOptions,
     CreateTemplateOptions,
     CreateWebhookOptions,
-    TrattoError,
     SendEmailOptions,
+    TrattoError,
     UpdateContactOptions,
     UpdateTemplateOptions,
 )

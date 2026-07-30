@@ -1,4 +1,3 @@
-from typing import Optional
 
 from .._http import HttpClient
 from ..types import CreateTemplateOptions, UpdateTemplateOptions
@@ -13,9 +12,9 @@ class TemplatesResource:
     def list(
         self,
         *,
-        limit: Optional[int] = None,
-        after: Optional[str] = None,
-        status: Optional[str] = None,
+        limit: int | None = None,
+        after: str | None = None,
+        status: str | None = None,
     ) -> dict:
         """List templates.
 
@@ -94,7 +93,7 @@ class TemplatesResource:
         self,
         template_id: str,
         to: str,
-        variables: Optional[dict[str, str]] = None,
+        variables: dict[str, str] | None = None,
     ) -> dict:
         """Send a test email using this template to a specific address.
 
