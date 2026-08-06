@@ -63,13 +63,13 @@ Every workspace can create **test API keys** (`tratto_test_…`) alongside live 
 client = Tratto("tratto_test_…")
 
 # Works immediately, even with an unverified sender domain
-email = client.emails.send(
+result = client.emails.send(SendEmailOptions(
     from_="Acme <hello@any-domain.dev>",
     to="delivered@simulator.tratto.email",
     subject="Hello from test mode",
     html="<p>It works!</p>",
-)
-# email.livemode is False
+))
+# result["livemode"] is False
 ```
 
 The recipient address picks the outcome (any other address simulates a normal delivery):
