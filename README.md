@@ -55,6 +55,36 @@ client = Tratto(os.environ["TRATTO_API_KEY"])
 
 ---
 
+## Test mode
+
+Every workspace can create **test API keys** (`tratto_test_…`) alongside live ones. A test key runs the exact same pipeline — statuses, email timeline, webhooks — but **nothing is actually delivered**: no domain verification needed, no monthly quota consumed (test sends have their own daily cap).
+
+```python
+client = Tratto("tratto_test_…")
+
+# Works immediately, even with an unverified sender domain
+email = client.emails.send(
+    from_="Acme <hello@any-domain.dev>",
+    to="delivered@simulator.tratto.email",
+    subject="Hello from test mode",
+    html="<p>It works!</p>",
+)
+# email.livemode is False
+```
+
+The recipient address picks the outcome (any other address simulates a normal delivery):
+
+| Recipient | Outcome |
+|---|---|
+| `delivered@simulator.tratto.email` | `delivered` event |
+| `bounced@simulator.tratto.email` | permanent bounce → email ends `failed` |
+| `soft-bounced@simulator.tratto.email` | transient bounce |
+| `complained@simulator.tratto.email` | spam complaint event |
+
+Responses and webhook payloads carry `livemode: false`; a test key only ever sees test data; test emails are retained for 7 days; endpoints that reach real recipients (campaign send, template test-send, flow activation) reject test keys with `403 TEST_MODE_NOT_SUPPORTED`. Going live is a one-line change: swap in a `tratto_live_…` key (verified sender domain required).
+
+---
+
 ## Emails
 
 ### Send a transactional email
