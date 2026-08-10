@@ -56,6 +56,16 @@ class TestClientInit:
         assert client.domains is not None
         assert client.campaigns is not None
         assert client.webhooks is not None
+        assert client.flows is not None
+        assert client.analytics is not None
+        assert client.workspace is not None
+
+    def test_does_not_expose_api_keys(self):
+        # API keys are issued from the dashboard, never from application code —
+        # the resource is deliberately absent from both SDKs.
+        client = Tratto("tratto_live_test")
+        assert not hasattr(client, "api_keys")
+        assert not hasattr(client, "apiKeys")
 
 
 # ── Emails ────────────────────────────────────────────────────────────────────────────────
@@ -405,3 +415,121 @@ class TestWebhooks:
         with patch(PATCH_URLOPEN, return_value=_mock_response(resp)):
             result = self.client.webhooks.list_deliveries("wh_abc123", limit=10)
         assert "data" in result
+
+
+# ── Analytics ─────────────────────────────────────────────────────────────────────────────
+
+class TestAnalytics:
+    def setup_method(self):
+        self.client = Tratto("tratto_live_test")
+
+    def test_summary_defaults_to_30d(self):
+        resp = {"data": {"period": "30d", "totalSent": 12}}
+        with patch(PATCH_URLOPEN, return_value=_mock_response(resp)) as m:
+            result = self.client.analytics.get_summary()
+        assert result["data"]["totalSent"] == 12
+        assert "period=30d" in m.call_args[0][0].full_url
+
+    def test_summary_honours_an_explicit_period(self):
+        resp = {"data": {"period": "7d"}}
+        with patch(PATCH_URLOPEN, return_value=_mock_response(resp)) as m:
+            self.client.analytics.get_summary("7d")
+        assert "period=7d" in m.call_args[0][0].full_url
+
+    def test_timeseries(self):
+        resp = {"data": [{"date": "2026-08-10", "sent": 3}]}
+        with patch(PATCH_URLOPEN, return_value=_mock_response(resp)) as m:
+            result = self.client.analytics.get_timeseries("24h")
+        assert result["data"][0]["sent"] == 3
+        assert "/v1/analytics/timeseries" in m.call_args[0][0].full_url
+
+
+# ── Flows ─────────────────────────────────────────────────────────────────────────────────
+
+class TestFlows:
+    def setup_method(self):
+        self.client = Tratto("tratto_live_test")
+
+    def test_list_passes_status_filter(self):
+        resp = {"data": [], "pagination": {"hasMore": False, "nextCursor": None}}
+        with patch(PATCH_URLOPEN, return_value=_mock_response(resp)) as m:
+            self.client.flows.list(status="active", limit=10)
+        assert "status=active" in m.call_args[0][0].full_url
+
+    def test_create_returns_the_flow(self):
+        resp = {"data": {"id": "flow_abc", "status": "draft"}}
+        with patch(PATCH_URLOPEN, return_value=_mock_response(resp)):
+            result = self.client.flows.create({"name": "Welcome", "steps": []})
+        # A new flow starts as a draft — nothing is enrolled until it's activated.
+        assert result["data"]["status"] == "draft"
+
+    def test_get(self):
+        resp = {"data": {"id": "flow_abc"}}
+        with patch(PATCH_URLOPEN, return_value=_mock_response(resp)) as m:
+            self.client.flows.get("flow_abc")
+        assert m.call_args[0][0].full_url.endswith("/v1/flows/flow_abc")
+
+    def test_update_uses_patch(self):
+        resp = {"data": {"id": "flow_abc", "name": "Renamed"}}
+        with patch(PATCH_URLOPEN, return_value=_mock_response(resp)) as m:
+            self.client.flows.update("flow_abc", {"name": "Renamed"})
+        assert m.call_args[0][0].get_method() == "PATCH"
+
+    def test_delete(self):
+        with patch(PATCH_URLOPEN, return_value=_mock_response({})) as m:
+            self.client.flows.delete("flow_abc")
+        assert m.call_args[0][0].get_method() == "DELETE"
+
+    def test_activate_and_deactivate_hit_their_endpoints(self):
+        resp = {"data": {"id": "flow_abc", "status": "active"}}
+        with patch(PATCH_URLOPEN, return_value=_mock_response(resp)) as m:
+            self.client.flows.activate("flow_abc")
+        assert m.call_args[0][0].full_url.endswith("/activate")
+
+        resp = {"data": {"id": "flow_abc", "status": "paused"}}
+        with patch(PATCH_URLOPEN, return_value=_mock_response(resp)) as m:
+            self.client.flows.deactivate("flow_abc")
+        assert m.call_args[0][0].full_url.endswith("/deactivate")
+
+
+# ── Workspace ─────────────────────────────────────────────────────────────────────────────
+
+class TestWorkspace:
+    def setup_method(self):
+        self.client = Tratto("tratto_live_test")
+
+    def test_get(self):
+        resp = {"data": {"id": "tenant_abc", "name": "Acme", "plan": "starter"}}
+        with patch(PATCH_URLOPEN, return_value=_mock_response(resp)):
+            result = self.client.workspace.get()
+        assert result["data"]["plan"] == "starter"
+
+    def test_update_uses_patch(self):
+        resp = {"data": {"id": "tenant_abc", "name": "Renamed"}}
+        with patch(PATCH_URLOPEN, return_value=_mock_response(resp)) as m:
+            self.client.workspace.update({"name": "Renamed"})
+        assert m.call_args[0][0].get_method() == "PATCH"
+
+    def test_update_preferences_targets_its_own_endpoint(self):
+        resp = {"data": {"language": "it"}}
+        with patch(PATCH_URLOPEN, return_value=_mock_response(resp)) as m:
+            self.client.workspace.update_preferences({"language": "it"})
+        assert m.call_args[0][0].full_url.endswith("/v1/workspace/preferences")
+
+    def test_invite_member_sends_email_and_role(self):
+        resp = {"data": {"userId": "inv_abc", "role": "admin"}}
+        with patch(PATCH_URLOPEN, return_value=_mock_response(resp)) as m:
+            self.client.workspace.invite_member("dev@example.com", "admin")
+        body = json.loads(m.call_args[0][0].data.decode())
+        assert body == {"email": "dev@example.com", "role": "admin"}
+
+    def test_update_member(self):
+        resp = {"data": {"userId": "uid_1", "role": "member"}}
+        with patch(PATCH_URLOPEN, return_value=_mock_response(resp)) as m:
+            self.client.workspace.update_member("uid_1", "member")
+        assert m.call_args[0][0].full_url.endswith("/v1/workspace/members/uid_1")
+
+    def test_remove_member(self):
+        with patch(PATCH_URLOPEN, return_value=_mock_response({})) as m:
+            self.client.workspace.remove_member("uid_1")
+        assert m.call_args[0][0].get_method() == "DELETE"

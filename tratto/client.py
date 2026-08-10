@@ -1,12 +1,15 @@
 from ._http import DEFAULT_BASE_URL, HttpClient
 from .resources import (
+    AnalyticsResource,
     AudiencesResource,
     CampaignsResource,
     ContactsResource,
     DomainsResource,
     EmailsResource,
+    FlowsResource,
     TemplatesResource,
     WebhooksResource,
+    WorkspaceResource,
 )
 
 
@@ -56,3 +59,12 @@ class Tratto:
 
         self.webhooks: WebhooksResource = WebhooksResource(http)
         """Register webhook endpoints and inspect delivery history."""
+
+        self.flows: FlowsResource = FlowsResource(http)
+        """Build automations that react to contact and email events."""
+
+        self.analytics: AnalyticsResource = AnalyticsResource(http)
+        """Delivery and engagement metrics, as totals or a daily series."""
+
+        self.workspace: WorkspaceResource = WorkspaceResource(http)
+        """Workspace settings and team membership."""

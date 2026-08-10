@@ -407,6 +407,60 @@ def verify_webhook_signature(payload: bytes, signature: str, secret: str) -> boo
 
 ---
 
+## Flows
+
+Automations that react to contact and email events. A flow only runs once it is
+*active*: `create` and `update` leave it in `draft`, and nothing is enrolled
+until `activate` is called.
+
+```python
+flow = client.flows.create({
+    "name": "Welcome sequence",
+    "trigger": {"type": "contact_tag_added", "config": {"tagName": "signup"}},
+    "steps": [
+        {"type": "send_email", "config": {"templateId": "tmpl_abc"}},
+        {"type": "wait", "config": {"delay": "2", "unit": "hours"}},
+    ],
+})
+
+client.flows.activate(flow["data"]["id"])
+
+# Pause it — contacts already mid-flow stay where they are
+client.flows.deactivate(flow["data"]["id"])
+```
+
+---
+
+## Analytics
+
+```python
+summary = client.analytics.get_summary("7d")     # 24h | 7d | 30d | 90d
+series = client.analytics.get_timeseries("30d")  # same metrics, per day
+```
+
+---
+
+## Workspace
+
+Settings and team membership.
+
+```python
+workspace = client.workspace.get()
+
+# The default sender must be on a domain already verified for this workspace
+client.workspace.update({"defaultFromEmail": "hello@yourdomain.com"})
+
+client.workspace.invite_member("dev@example.com", "admin")
+client.workspace.update_member("uid_1", "member")
+client.workspace.remove_member("uid_1")
+```
+
+API keys are deliberately **not** part of the SDK: they are issued from the
+dashboard, where the raw value is shown once and its permissions are chosen
+explicitly. For automated provisioning, call `/v1/api-keys` over HTTP directly.
+
+---
+
 ## Error handling
 
 All API errors raise `TrattoError`:
