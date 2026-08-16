@@ -41,6 +41,11 @@ class SendEmailOptions:
     html: str | None = None
     """HTML body."""
 
+    markdown: str | None = None
+    """emailmd markdown body, rendered server-side into responsive email
+    HTML (plus a text part). Mutually exclusive with *html* — the API
+    rejects requests carrying both."""
+
     text: str | None = None
     """Plain-text body."""
 
@@ -145,6 +150,10 @@ class CreateTemplateOptions:
     html: str = ""
     """Initial HTML content. Use ``{{variable_name}}`` for template variables."""
 
+    markdown: str | None = None
+    """emailmd markdown source. Creates a ``format: 'emailmd'`` template whose
+    HTML is rendered server-side at save time. Mutually exclusive with *html*."""
+
 
 @dataclass
 class UpdateTemplateOptions:
@@ -155,6 +164,8 @@ class UpdateTemplateOptions:
 
     name: str | None = None
     html: str | None = None
+    markdown: str | None = None
+    """New markdown source for an emailmd template (re-rendered at save)."""
     status: str | None = None
     """Set to ``'published'`` to make the template available for campaigns."""
 
