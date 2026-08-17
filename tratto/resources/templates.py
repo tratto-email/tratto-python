@@ -41,6 +41,9 @@ class TemplatesResource:
         # body or the API would reject the request.
         body: dict = {"name": options.name}
         if options.markdown is not None:
+            # The API requires format alongside markdown at create
+            # ("markdown requires format 'emailmd'.") — inferred here.
+            body["format"] = "emailmd"
             body["markdown"] = options.markdown
         else:
             body["html"] = options.html

@@ -252,7 +252,7 @@ class TestTemplates:
         with patch(PATCH_URLOPEN, return_value=_mock_response(resp)) as mock_open:
             self.client.templates.create(CreateTemplateOptions(name="md", markdown="# Hi"))
         body = json.loads(mock_open.call_args[0][0].data.decode())
-        assert body == {"name": "md", "markdown": "# Hi"}
+        assert body == {"name": "md", "format": "emailmd", "markdown": "# Hi"}
 
     def test_update_sends_markdown(self):
         resp = {"data": {"id": "tmpl_md", "version": 2}}
