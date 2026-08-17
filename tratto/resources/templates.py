@@ -36,11 +36,18 @@ class TemplatesResource:
         Returns the full template object including ``id``, ``name``, ``html``,
         ``status``, ``version``, ``createdAt``, and ``updatedAt``.
         """
-        return self._http._request(
-            "POST",
-            "/v1/templates",
-            body={"name": options.name, "html": options.html},
-        )
+        # markdown and html are mutually exclusive server-side; when markdown
+        # is given, the (defaulted, possibly empty) html must stay out of the
+        # body or the API would reject the request.
+        body: dict = {"name": options.name}
+        if options.markdown is not None:
+            # The API requires format alongside markdown at create
+            # ("markdown requires format 'emailmd'.") — inferred here.
+            body["format"] = "emailmd"
+            body["markdown"] = options.markdown
+        else:
+            body["html"] = options.html
+        return self._http._request("POST", "/v1/templates", body=body)
 
     def get(self, template_id: str) -> dict:
         """Get a single template with its current HTML."""
@@ -57,6 +64,8 @@ class TemplatesResource:
             body["name"] = options.name
         if options.html is not None:
             body["html"] = options.html
+        if options.markdown is not None:
+            body["markdown"] = options.markdown
         if options.status is not None:
             body["status"] = options.status
         return self._http._request("PATCH", f"/v1/templates/{template_id}", body=body)

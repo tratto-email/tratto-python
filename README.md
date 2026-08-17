@@ -36,6 +36,22 @@ result = client.emails.send(SendEmailOptions(
 print(result["id"])  # email_…
 ```
 
+Or write the email in [emailmd](https://www.emailmd.dev/) markdown — rendered
+server-side into responsive, email-safe HTML (plus a text part):
+
+```python
+client.emails.send(SendEmailOptions(
+    from_="Acme <hello@mail.acme.com>",
+    to="user@example.com",
+    subject="Welcome!",
+    markdown="# Welcome, {{first_name}}\n\nGlad to have you on board.",
+))
+```
+
+``markdown`` is mutually exclusive with ``html``. Templates accept it too:
+``CreateTemplateOptions(name=..., markdown=...)`` creates a ``format: 'emailmd'``
+template whose HTML is rendered and pinned at save time.
+
 ---
 
 ## Authentication

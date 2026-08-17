@@ -19,7 +19,6 @@ from tratto import (
     UpdateTemplateOptions,
 )
 
-
 # ── Helpers ───────────────────────────────────────────────────────────────────────────────
 
 PATCH_URLOPEN = "tratto._http.urlopen"
@@ -109,6 +108,20 @@ class TestEmails:
             ))
         req = mock_open.call_args[0][0]
         assert req.get_header("Idempotency-key") == "idem-key-123"
+
+    def test_send_markdown_goes_in_body_without_html(self):
+        resp = {"data": {"id": "email_md1"}}
+        with patch(PATCH_URLOPEN, return_value=_mock_response(resp)) as mock_open:
+            self.client.emails.send(SendEmailOptions(
+                from_="sender@example.com",
+                to="success@simulator.amazonses.com",
+                subject="md",
+                markdown="# Hi {{name}}",
+            ))
+        req = mock_open.call_args[0][0]
+        body = json.loads(req.data.decode())
+        assert body["markdown"] == "# Hi {{name}}"
+        assert "html" not in body
 
     def test_list_emails(self):
         resp = {"data": [], "pagination": {"hasMore": False, "nextCursor": None}}
@@ -233,6 +246,20 @@ class TestAudiences:
 class TestTemplates:
     def setup_method(self):
         self.client = Tratto("tratto_live_test")
+
+    def test_create_with_markdown_omits_html(self):
+        resp = {"data": {"id": "tmpl_md", "format": "emailmd", "source": "# Hi", "html": "<html>"}}
+        with patch(PATCH_URLOPEN, return_value=_mock_response(resp)) as mock_open:
+            self.client.templates.create(CreateTemplateOptions(name="md", markdown="# Hi"))
+        body = json.loads(mock_open.call_args[0][0].data.decode())
+        assert body == {"name": "md", "format": "emailmd", "markdown": "# Hi"}
+
+    def test_update_sends_markdown(self):
+        resp = {"data": {"id": "tmpl_md", "version": 2}}
+        with patch(PATCH_URLOPEN, return_value=_mock_response(resp)) as mock_open:
+            self.client.templates.update("tmpl_md", UpdateTemplateOptions(markdown="# V2"))
+        body = json.loads(mock_open.call_args[0][0].data.decode())
+        assert body == {"markdown": "# V2"}
 
     def test_create_template(self):
         resp = {"data": {"id": "tmpl_abc123", "name": "Welcome", "status": "draft", "version": 1}}

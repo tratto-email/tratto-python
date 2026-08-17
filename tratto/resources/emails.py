@@ -32,6 +32,8 @@ class EmailsResource:
         }
         if options.html is not None:
             body["html"] = options.html
+        if options.markdown is not None:
+            body["markdown"] = options.markdown
         if options.text is not None:
             body["text"] = options.text
         if options.reply_to is not None:
