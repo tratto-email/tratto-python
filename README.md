@@ -500,8 +500,13 @@ except TrattoError as e:
 | `FORBIDDEN` | 403 | Key lacks the required permission, or domain not verified |
 | `NOT_FOUND` | 404 | Resource does not exist |
 | `CONFLICT` | 409 | Duplicate (e.g. contact email already exists) |
-| `QUOTA_EXCEEDED` | 429 | Monthly email quota reached |
+| `QUOTA_EXCEEDED` | 429 | A plan or test-mode limit was reached: the monthly email quota (on a send, or a campaign send with more recipients than remain this month), the plan's domain limit (`domains.create`), or, with a test key, the daily cap of 100 test sends (resets at midnight UTC) |
+| `RATE_LIMITED` | 429 | Too many requests: more than 100 requests/second per API key, or more than 500 requests/minute per client IP (some endpoints set tighter limits) |
 | `VALIDATION_ERROR` | 422 | Invalid request body |
+
+Both `QUOTA_EXCEEDED` and `RATE_LIMITED` use HTTP 429, so check `e.code` rather than `e.status_code` to tell them apart: a `RATE_LIMITED` request succeeds if retried after a short back-off, while a `QUOTA_EXCEEDED` one keeps failing until the limit resets or the plan changes.
+
+Full list: [error codes](https://docs.tratto.email/en/docs/error-codes).
 
 ---
 
@@ -766,7 +771,7 @@ def request_password_reset():
 | `client.campaigns` | Create, send, and track marketing campaigns |
 | `client.webhooks` | Register endpoints and inspect delivery history |
 
-Full API documentation: [tratto.email/docs](https://tratto.email/docs)
+Full API documentation: [docs.tratto.email](https://docs.tratto.email)
 
 ---
 
