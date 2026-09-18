@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "tratto-email"
-version = "1.1.0"
+version = "1.1.1"
 description = "Tratto Python SDK — send transactional and marketing email"
 readme = "README.md"
 license = { text = "MIT" }

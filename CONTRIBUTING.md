@@ -109,7 +109,10 @@ tratto-python/
 │       ├── templates.py
 │       ├── domains.py
 │       ├── campaigns.py
-│       └── webhooks.py
+│       ├── webhooks.py
+│       ├── flows.py
+│       ├── analytics.py
+│       └── workspace.py
 ├── tests/
 │   └── test_client.py
 ├── pyproject.toml
@@ -124,7 +127,7 @@ tratto-python/
 
 - **No external runtime dependencies.** The SDK uses only Python's standard library.
 - **Python 3.10+** — use native generics (`list[str]`, `dict[str, str]`, `str | None`).
-- **Strict type hints** on all public functions and methods (enforced by `mypy --strict`).
+- **Strict type hints** on all public functions and methods (enforced by `mypy tratto`, config in `[tool.mypy]` of `pyproject.toml`).
 - **Dataclasses for option objects** — one per write operation, matching the API body.
 - **snake_case** in Python maps to **camelCase** in JSON request bodies and responses.
 - **Resource sub-clients** — each API resource group has its own class in `tratto/resources/`.
@@ -143,16 +146,15 @@ This SDK follows [Semantic Versioning](https://semver.org/):
 | **Minor** (`0.x.0`) | New API coverage, new optional fields |
 | **Major** (`x.0.0`) | Breaking changes to the public API |
 
-When cutting a release, update:
-- `__version__` in `tratto/__init__.py`
-- `_SDK_VERSION` in `tratto/_http.py`
-- `version` in `pyproject.toml`
+The version lives in one place: `version` in `pyproject.toml`. `tratto.__version__`
+and the `User-Agent` header read it at import time via `importlib.metadata`, so after
+a bump re-run `pip install -e ".[dev]"` for your local install to report the new value.
 
 ---
 
 ## Release process (maintainers only)
 
-1. Bump the version in the three files above.
+1. Bump `version` in `pyproject.toml`.
 2. Commit and merge to `main`.
 3. Push a tag:
    ```bash

@@ -32,4 +32,6 @@ __all__ = [
     "CreateWebhookOptions",
 ]
 
-__version__ = "0.2.0"
+from ._http import _SDK_VERSION
+
+__version__ = _SDK_VERSION
