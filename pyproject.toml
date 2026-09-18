@@ -30,7 +30,7 @@ dev = ["pytest>=8.0", "pytest-cov", "ruff", "mypy"]
 [project.urls]
 Homepage = "https://tratto.email"
 Repository = "https://github.com/tratto-email/tratto-python"
-Documentation = "https://tratto.email/docs"
+Documentation = "https://docs.tratto.email"
 Issues = "https://github.com/tratto-email/tratto-python/issues"
 
 [tool.hatch.build.targets.wheel]
