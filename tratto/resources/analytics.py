@@ -15,7 +15,8 @@ class AnalyticsResource:
         complained, plus the derived rates and the average delivery latency.
 
         Args:
-            period: ``24h``, ``7d``, ``30d`` or ``90d``. Defaults to ``30d``.
+            period: ``7d``, ``30d``, ``90d``, ``180d`` or ``1y``. Defaults to ``30d``.
+                ``180d`` and ``1y`` are rejected with a test-mode key.
         """
         return self._http._request(
             "GET", "/v1/analytics/summary", params={"period": period}
@@ -27,7 +28,8 @@ class AnalyticsResource:
         Useful for charting a trend rather than a single number.
 
         Args:
-            period: ``24h``, ``7d``, ``30d`` or ``90d``. Defaults to ``30d``.
+            period: ``7d``, ``30d``, ``90d``, ``180d`` or ``1y``. Defaults to ``30d``.
+                ``180d`` and ``1y`` are rejected with a test-mode key.
         """
         return self._http._request(
             "GET", "/v1/analytics/timeseries", params={"period": period}

@@ -1,4 +1,6 @@
 import json
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version as _pkg_version
 from urllib.error import HTTPError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
@@ -6,7 +8,10 @@ from urllib.request import Request, urlopen
 from .types import TrattoError
 
 DEFAULT_BASE_URL = "https://api.tratto.email"
-_SDK_VERSION = "0.2.0"
+try:
+    _SDK_VERSION = _pkg_version("tratto-email")
+except PackageNotFoundError:  # source checkout never pip-installed
+    _SDK_VERSION = "0.0.0+unknown"
 
 
 class HttpClient:

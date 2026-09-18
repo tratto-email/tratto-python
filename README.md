@@ -313,6 +313,10 @@ client.templates.test_send(
 client.templates.delete(template_id)
 ```
 
+Responses are plain dicts with the API's camelCase keys. For `markdown` templates,
+`create` and `update` also return the emailmd renderer's warnings when there are any:
+`template["data"].get("renderWarnings", [])`.
+
 ---
 
 ## Domains
@@ -450,9 +454,12 @@ client.flows.deactivate(flow["data"]["id"])
 ## Analytics
 
 ```python
-summary = client.analytics.get_summary("7d")     # 24h | 7d | 30d | 90d
+summary = client.analytics.get_summary("7d")     # 7d | 30d | 90d | 180d | 1y
 series = client.analytics.get_timeseries("30d")  # same metrics, per day
 ```
+
+`180d` and `1y` read the long-term aggregate, which holds live data only: with a
+test-mode key they are rejected with `VALIDATION_ERROR` — use `90d` or shorter.
 
 ---
 
@@ -770,6 +777,9 @@ def request_password_reset():
 | `client.domains` | Register and verify sender domains |
 | `client.campaigns` | Create, send, and track marketing campaigns |
 | `client.webhooks` | Register endpoints and inspect delivery history |
+| `client.flows` | Build automations that react to contact and email events |
+| `client.analytics` | Delivery and engagement metrics, as totals or a daily series |
+| `client.workspace` | Workspace settings and team membership |
 
 Full API documentation: [docs.tratto.email](https://docs.tratto.email)
 

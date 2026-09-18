@@ -66,6 +66,19 @@ class TestClientInit:
         assert not hasattr(client, "api_keys")
         assert not hasattr(client, "apiKeys")
 
+    def test_user_agent_carries_package_version(self):
+        # The version has a single source (pyproject.toml, read via
+        # importlib.metadata): __version__ and the User-Agent must both follow it.
+        from importlib.metadata import version
+
+        import tratto
+
+        assert tratto.__version__ == version("tratto-email")
+        with patch(PATCH_URLOPEN, return_value=_mock_response({"data": {}})) as mock_open:
+            Tratto("tratto_live_test").workspace.get()
+        req = mock_open.call_args[0][0]
+        assert req.get_header("User-agent") == f"tratto-python/{version('tratto-email')}"
+
 
 # ── Emails ────────────────────────────────────────────────────────────────────────────────
 
@@ -144,18 +157,16 @@ class TestEmails:
 
     def test_api_error_raises_tratto_error(self):
         error = _http_error({"error": {"code": "NOT_FOUND", "message": "Email not found"}}, 404)
-        with patch(PATCH_URLOPEN, side_effect=error):
-            with pytest.raises(TrattoError) as exc_info:
-                self.client.emails.get("email_notexist")
+        with patch(PATCH_URLOPEN, side_effect=error), pytest.raises(TrattoError) as exc_info:
+            self.client.emails.get("email_notexist")
         assert exc_info.value.code == "NOT_FOUND"
         assert exc_info.value.status_code == 404
         assert "Email not found" in str(exc_info.value)
 
     def test_unauthorized_raises_tratto_error(self):
         error = _http_error({"error": {"code": "UNAUTHORIZED", "message": "Invalid API key"}}, 401)
-        with patch(PATCH_URLOPEN, side_effect=error):
-            with pytest.raises(TrattoError) as exc_info:
-                self.client.emails.list()
+        with patch(PATCH_URLOPEN, side_effect=error), pytest.raises(TrattoError) as exc_info:
+            self.client.emails.list()
         assert exc_info.value.status_code == 401
 
 
