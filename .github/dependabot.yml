@@ -1,0 +1,32 @@
+# Aggiornamenti delle dipendenze. Mensile e raggruppato di proposito: ogni PR
+# fa girare la CI, e il budget Actions dell'organizzazione e' di 3000 minuti al
+# mese (settembre 2026: 3075 usati, di cui 136 da questo gruppo di repo
+# pubblici, che non consumano il budget). Vedi tratto-api#457.
+#
+# Le PR arrivano su `main`, che e' il branch di default: `target-branch` verso
+# un altro branch spegnerebbe i security update, che girano solo sul default.
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: "/"
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 1
+    groups:
+      all:
+        patterns: ["*"]
+      security:
+        applies-to: security-updates
+        patterns: ["*"]
+    commit-message:
+      prefix: "chore(deps)"
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 1
+    groups:
+      actions:
+        patterns: ["*"]
+    commit-message:
+      prefix: "chore(ci)"
