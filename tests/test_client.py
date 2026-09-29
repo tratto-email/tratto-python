@@ -548,6 +548,24 @@ class TestWorkspace:
             self.client.workspace.update({"name": "Renamed"})
         assert m.call_args[0][0].get_method() == "PATCH"
 
+    def test_update_senders_sends_only_the_type_given(self):
+        """Scrittura parziale (#20): un tipo solo, gli altri due non si toccano."""
+        resp = {"data": {"id": "tenant_abc"}}
+        body = {"senders": {"marketing": {"fromEmail": "news@acme.test", "fromName": "Acme"}}}
+        with patch(PATCH_URLOPEN, return_value=_mock_response(resp)) as m:
+            self.client.workspace.update(body)
+        sent = json.loads(m.call_args[0][0].data.decode())
+        assert sent == body
+        assert "automation" not in sent["senders"]
+
+    def test_update_senders_keeps_none_instead_of_dropping_it(self):
+        """`None` su un tipo lo rimette in eredita': non deve sparire nel JSON."""
+        resp = {"data": {"id": "tenant_abc"}}
+        with patch(PATCH_URLOPEN, return_value=_mock_response(resp)) as m:
+            self.client.workspace.update({"senders": {"marketing": None}})
+        sent = json.loads(m.call_args[0][0].data.decode())
+        assert sent == {"senders": {"marketing": None}}
+
     def test_update_preferences_targets_its_own_endpoint(self):
         resp = {"data": {"language": "it"}}
         with patch(PATCH_URLOPEN, return_value=_mock_response(resp)) as m:
