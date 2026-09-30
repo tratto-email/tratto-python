@@ -13,14 +13,48 @@ class WorkspaceResource:
         self._http = http
 
     def get(self) -> dict:
-        """Get the current workspace: name, slug, plan and default sender."""
+        """Get the current workspace: name, slug, plan and senders.
+
+        Besides the workspace-wide ``defaultFromName``/``defaultFromEmail``, an
+        API from 0.5.7 on returns ``senders``: one entry per send type —
+        ``marketing``, ``automation``, ``transactional`` — each either ``None``
+        or ``{"fromEmail": ..., "fromName": ..., "replyTo": ...}``.
+
+        A type set to ``None`` is **not configured and inherits** the
+        workspace-wide default; it is never a reason for a send to be refused.
+        Read it defensively: an older API does not return the key at all.
+
+            senders = workspace.get().get("senders") or {}
+            marketing = senders.get("marketing")  # may be None
+        """
         return self._http._request("GET", "/v1/workspace")
 
     def update(self, options: dict) -> dict:
         """Update workspace settings.
 
         Setting ``defaultFromEmail`` requires the address to be on a domain
-        already verified for this workspace; otherwise the API answers 403.
+        already verified for this workspace; otherwise the API answers 403. The
+        same applies to every address in ``senders``.
+
+        Writing ``senders`` is **partial**: sending one type leaves the other
+        two untouched, and ``None`` on a type puts it back to inheriting the
+        workspace-wide default.
+
+            # only marketing; automation and transactional stay as they are
+            client.workspace.update(
+                {"senders": {"marketing": {"fromEmail": "news@acme.test", "fromName": "Acme"}}}
+            )
+
+            # back to the workspace-wide default for that type
+            client.workspace.update({"senders": {"marketing": None}})
+
+        ``fromEmail`` and ``fromName`` travel together: an entry carrying only
+        one of the two is refused.
+
+        Which type applies where: ``marketing`` for campaigns and template test
+        sends, ``automation`` for the emails a flow sends (resolved when the
+        flow is activated), ``transactional`` for API sends that carry no
+        ``from`` of their own.
         """
         return self._http._request("PATCH", "/v1/workspace", body=options)
 
