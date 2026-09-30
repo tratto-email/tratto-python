@@ -382,6 +382,22 @@ class TestCampaigns:
             )
         assert result["data"]["status"] == "scheduled"
 
+    def test_unschedule_campaign(self):
+        resp = {"data": {"id": "camp_abc123", "status": "draft", "scheduledAt": None}}
+        with patch(PATCH_URLOPEN, return_value=_mock_response(resp)) as m:
+            result = self.client.campaigns.unschedule("camp_abc123")
+        assert m.call_args[0][0].full_url.endswith("/v1/campaigns/camp_abc123/unschedule")
+        assert result["data"]["status"] == "draft"
+        assert result["data"]["scheduledAt"] is None
+
+    def test_unschedule_campaign_already_sending_raises_conflict(self):
+        body = {"error": {"code": "CONFLICT", "message": "already started sending"}}
+        with patch(PATCH_URLOPEN, side_effect=_http_error(body, 409)):
+            with pytest.raises(TrattoError) as e:
+                self.client.campaigns.unschedule("camp_abc123")
+        assert e.value.code == "CONFLICT"
+        assert e.value.status_code == 409
+
     def test_pause_campaign(self):
         resp = {"data": {"status": "paused"}}
         with patch(PATCH_URLOPEN, return_value=_mock_response(resp)):
