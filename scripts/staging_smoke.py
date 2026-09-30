@@ -88,7 +88,10 @@ def main() -> int:
     failure: str | None = None
 
     try:
-        workspace = tratto.workspace.get()
+        # Every response is wrapped in an envelope: the payload is under
+        # "data". Reading a field straight off the return value is the bug
+        # this script exists to catch, and caught on itself first (#27).
+        workspace = tratto.workspace.get()["data"]
         step(f"workspace: {workspace['name']} (plan {workspace['plan']})")
 
         # ── Contact ───────────────────────────────────────────────────────────
@@ -101,7 +104,7 @@ def main() -> int:
                 custom_fields={"run_id": run_id},
             )
         )
-        contact_id = contact["id"]
+        contact_id = contact["data"]["id"]
         # The API has no delete for contacts: unsubscribing is the most we can
         # undo. The address is a simulator one, so the residue is inert.
         undo.append(
@@ -121,7 +124,7 @@ def main() -> int:
                 html="<h1>Hi {{first_name}}</h1><p>Smoke run " + run_id + "</p>",
             )
         )
-        template_id = template["id"]
+        template_id = template["data"]["id"]
         undo.append(
             (
                 f"delete template {template_id}",
@@ -143,17 +146,16 @@ def main() -> int:
                 tags=["sdk-smoke"],
             )
         )
-        email_id = sent["id"]
-        if sent.get("livemode") is not False:
-            raise RuntimeError(
-                f"expected livemode false on a test key, got {sent.get('livemode')!r}"
-            )
+        email_id = sent["data"]["id"]
+        livemode = sent["data"].get("livemode")
+        if livemode is not False:
+            raise RuntimeError(f"expected livemode false on a test key, got {livemode!r}")
         step(f"email sent: {email_id} (livemode false)")
 
         # ── Read the state back ───────────────────────────────────────────────
         status = ""
         for _ in range(10):
-            email = tratto.emails.get(email_id)
+            email = tratto.emails.get(email_id)["data"]
             status = email["status"]
             if status != "queued":
                 break

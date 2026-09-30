@@ -74,8 +74,16 @@ job instead of a customer's build.
 
 Note that the resource methods return a bare `dict`, so the checks catch
 mistakes in the **calls** (unknown method, wrong argument type) but not in the
-**response** fields an example reads: `email["stauts"]` typechecks fine. Only
-the staging smoke test below catches that.
+**response** fields an example reads: `email["stauts"]` typechecks fine.
+
+This is not theoretical. The first version of `examples/` passed ruff and mypy
+while being broken at runtime in every file: the API wraps every payload in an
+envelope (`{"data": …}`, with `"pagination"` beside it on list endpoints) and
+the examples read fields straight off the return value. Running one found it in
+a second; the static checks never would. `tests/test_examples_envelope.py` now
+guards the envelope specifically — but not the field names inside it, which
+only the staging smoke test below can check. See
+[#27](https://github.com/tratto-email/tratto-python/issues/27).
 
 Your local `ruff` can be older than CI's, which installs the latest release on
 every run. Run `pip install -U ruff mypy` before trusting a green local check.

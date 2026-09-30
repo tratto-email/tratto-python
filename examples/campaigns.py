@@ -27,11 +27,12 @@ campaign = tratto.campaigns.create(
         subject_b="February at Acme",  # A/B test, optional
     )
 )
-campaign_id = campaign["id"]
+# Every response is wrapped in an envelope: the payload is under "data".
+campaign_id = campaign["data"]["id"]
 print("draft", campaign_id)
 
 # ── 2. Read it back, and list the drafts you have queued ──────────────────────
-print("status:", tratto.campaigns.get(campaign_id)["status"])
+print("status:", tratto.campaigns.get(campaign_id)["data"]["status"])
 
 drafts = tratto.campaigns.list(status="draft", limit=25)
 print("drafts:", len(drafts["data"]))
@@ -41,8 +42,9 @@ if drafts["pagination"]["hasMore"]:
     )
 
 # ── 3. Stats, once it has gone out ────────────────────────────────────────────
-stats = tratto.campaigns.get_stats(campaign_id)
-print("delivered:", stats["delivered"], "opened:", stats["opened"])
+stats = tratto.campaigns.get_stats(campaign_id)["data"]
+print("delivered:", stats["stats"]["delivered"], "opened:", stats["stats"]["opened"])
+print("open rate:", stats["rates"]["openRate"], "%")
 
 
 def send_it(campaign_id: str) -> None:
