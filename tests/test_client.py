@@ -392,9 +392,11 @@ class TestCampaigns:
 
     def test_unschedule_campaign_already_sending_raises_conflict(self):
         body = {"error": {"code": "CONFLICT", "message": "already started sending"}}
-        with patch(PATCH_URLOPEN, side_effect=_http_error(body, 409)):
-            with pytest.raises(TrattoError) as e:
-                self.client.campaigns.unschedule("camp_abc123")
+        with (
+            patch(PATCH_URLOPEN, side_effect=_http_error(body, 409)),
+            pytest.raises(TrattoError) as e,
+        ):
+            self.client.campaigns.unschedule("camp_abc123")
         assert e.value.code == "CONFLICT"
         assert e.value.status_code == 409
 
