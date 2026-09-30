@@ -33,8 +33,11 @@ result = client.emails.send(SendEmailOptions(
     subject="Welcome to our platform!",
     html="<h1>Welcome!</h1><p>Thanks for signing up.</p>",
 ))
-print(result["id"])  # email_…
+print(result["data"]["id"])  # email_…
 ```
+
+Every response is wrapped in an envelope: the payload is under `"data"`, and
+on a list response `"data"` is the array with `"pagination"` beside it.
 
 Or write the email in [emailmd](https://www.emailmd.dev/) markdown — rendered
 server-side into responsive, email-safe HTML (plus a text part):
@@ -85,7 +88,7 @@ result = client.emails.send(SendEmailOptions(
     subject="Hello from test mode",
     html="<p>It works!</p>",
 ))
-# result["livemode"] is False
+# result["data"]["livemode"] is False
 ```
 
 The recipient address picks the outcome (any other address simulates a normal delivery):
@@ -117,7 +120,7 @@ result = client.emails.send(SendEmailOptions(
     reply_to="support@acme.com",
     tags=["order", "shipping"],
 ))
-print(result["id"])  # email_…
+print(result["data"]["id"])  # email_…
 ```
 
 **With a saved template:**
@@ -571,7 +574,7 @@ def send_welcome_email(user) -> str:
         template_id=settings.TRATTO_WELCOME_TEMPLATE_ID,
         variables={"first_name": user.first_name},
     ))
-    return result["id"]
+    return result["data"]["id"]
 ```
 
 ```python
@@ -688,7 +691,7 @@ async def confirm_order(
         ),
     )
     result = await asyncio.get_event_loop().run_in_executor(None, send)
-    return {"email_id": result["id"]}
+    return {"email_id": result["data"]["id"]}
 ```
 
 ---
@@ -725,7 +728,7 @@ def register():
             subject="Welcome!",
             html=f"<p>Hi {user['name']}, thanks for signing up!</p>",
         ))
-        app.logger.info("Welcome email sent: %s", result["id"])
+        app.logger.info("Welcome email sent: %s", result["data"]["id"])
     except TrattoError as e:
         app.logger.error("Email failed [%s]: %s", e.code, e)
     return jsonify({"id": user["id"]}), 201

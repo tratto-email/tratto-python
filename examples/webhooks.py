@@ -23,10 +23,11 @@ webhook = tratto.webhooks.create(
         events=["delivered", "bounced", "complained", "opened", "clicked"],
     )
 )
-webhook_id = webhook["id"]
+# Every response is wrapped in an envelope: the payload is under "data".
+webhook_id = webhook["data"]["id"]
 
 # The signing secret is returned once, at creation. Store it now.
-secret = webhook["secret"]
+secret = webhook["data"]["secret"]
 print("registered", webhook_id)
 
 # ── 2. Send a synthetic event to check the endpoint answers ───────────────────
@@ -35,7 +36,7 @@ tratto.webhooks.test(webhook_id)
 # ── 3. Delivery history, most recent first ────────────────────────────────────
 deliveries = tratto.webhooks.list_deliveries(webhook_id, limit=20)
 for delivery in deliveries["data"]:
-    print(" ", delivery["event"], delivery["responseStatus"])
+    print(" ", delivery["eventType"], delivery["status"], delivery["httpStatus"])
 if deliveries["pagination"]["hasMore"]:
     deliveries = tratto.webhooks.list_deliveries(
         webhook_id, limit=20, after=deliveries["pagination"]["nextCursor"]
@@ -45,7 +46,7 @@ if deliveries["pagination"]["hasMore"]:
 print("webhooks:", [w["url"] for w in tratto.webhooks.list()["data"]])
 
 # Rotating invalidates the old secret immediately: deploy the new one first.
-secret = tratto.webhooks.rotate_secret(webhook_id)["secret"]
+secret = tratto.webhooks.rotate_secret(webhook_id)["data"]["secret"]
 
 tratto.webhooks.delete(webhook_id)
 

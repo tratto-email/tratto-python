@@ -34,8 +34,9 @@ except TrattoError as err:
     # .code is machine-readable, .status_code is the HTTP status.
     raise SystemExit(f"send failed [{err.code}/{err.status_code}]: {err}") from err
 
-email_id = sent["id"]
-print("sent", email_id, "livemode:", sent["livemode"])
+# Every response is wrapped in an envelope: the payload is under "data".
+email_id = sent["data"]["id"]
+print("sent", email_id, "livemode:", sent["data"]["livemode"])
 
 # ── 2. Send from a saved template, with variables ─────────────────────────────
 tratto.emails.send(
@@ -53,10 +54,12 @@ tratto.emails.send(
 
 # ── 3. Read the email back, plus its delivery timeline ────────────────────────
 email = tratto.emails.get(email_id)
-print("status:", email["status"])
+print("status:", email["data"]["status"])
 
+# On a list response "data" is already the array, and "pagination" sits
+# beside it.
 for event in tratto.emails.get_events(email_id)["data"]:
-    print(" ", event["type"], event["createdAt"])
+    print(" ", event["type"], event["occurredAt"])
 
 # ── 4. List ───────────────────────────────────────────────────────────────────
 failed = tratto.emails.list(status="failed", limit=10, date_from="2026-01-01")

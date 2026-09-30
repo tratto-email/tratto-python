@@ -21,7 +21,8 @@ template = tratto.templates.create(
         html="<h1>Hi {{first_name}}</h1><p>Welcome to {{product}}.</p>",
     )
 )
-template_id = template["id"]
+# Every response is wrapped in an envelope: the payload is under "data".
+template_id = template["data"]["id"]
 print("created", template_id)
 
 # Or write it in emailmd markdown and let the API render the HTML.
@@ -41,14 +42,14 @@ tratto.templates.update(
 # ── 3. Version history (most recent first, up to 20) ──────────────────────────
 versions = tratto.templates.list_versions(template_id)["data"]
 for version in versions:
-    print(" v", version["version"], version["createdAt"])
+    print(" v", version["version"], version["savedAt"])
 
 previous = tratto.templates.get_version(template_id, versions[-1]["version"])
-print("first version was", len(previous["html"]), "bytes")
+print("first version was", len(previous["data"]["html"]), "bytes")
 
 # ── 4. Publish, so campaigns can use it ───────────────────────────────────────
 tratto.templates.update(template_id, UpdateTemplateOptions(status="published"))
-print("status:", tratto.templates.get(template_id)["status"])
+print("status:", tratto.templates.get(template_id)["data"]["status"])
 
 
 def preview_in_your_own_inbox(template_id: str) -> None:
@@ -63,4 +64,4 @@ published = tratto.templates.list(status="published", limit=25)
 print("published templates:", len(published["data"]))
 
 # Deleting is permanent and takes the version history with it.
-tratto.templates.delete(markdown_template["id"])
+tratto.templates.delete(markdown_template["data"]["id"])

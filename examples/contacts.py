@@ -28,7 +28,8 @@ contact = tratto.contacts.create(
         custom_fields={"plan": "pro", "signup_source": "website"},
     )
 )
-contact_id = contact["id"]
+# Every response is wrapped in an envelope: the payload is under "data".
+contact_id = contact["data"]["id"]
 print("created", contact_id)
 
 # ── 2. Update — only the fields you pass change ───────────────────────────────
@@ -54,10 +55,13 @@ print("subscribed vips:", seen)
 job = tratto.contacts.import_csv(
     "email,firstName,lastName\nbob@example.com,Bob,Jones\ncarol@example.com,Carol,Doe\n"
 )
+job_id = job["data"]["jobId"]
 while True:
-    status = tratto.contacts.get_import_job(job["jobId"])
-    if status["status"] in ("completed", "failed"):
-        print("import", status["status"], status.get("imported"), "imported")
+    state = tratto.contacts.get_import_job(job_id)["data"]
+    if state["status"] in ("completed", "failed"):
+        print("import", state["status"], state["processedRows"], "rows")
+        if state["failedRows"]:
+            print("  failed rows:", state["failedRows"], state["errors"])
         break
     time.sleep(2)
 

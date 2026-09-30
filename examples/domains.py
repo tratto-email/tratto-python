@@ -15,21 +15,22 @@ if not api_key:
 tratto = Tratto(api_key)
 
 # ── 1. Register the domain — this generates the DKIM keys ─────────────────────
-domain = tratto.domains.add("acme.com")
+# Every response is wrapped in an envelope: the payload is under "data".
+domain = tratto.domains.add("acme.com")["data"]
 domain_id = domain["id"]
 
 # ── 2. Publish these records at your DNS provider ─────────────────────────────
-for record in domain["dnsRecords"]:
-    print(f"{record['type']:6} {record['name']}  ->  {record['value']}")
+for record in domain["records"]:
+    print(f"{record['purpose']:4} {record['type']:6} {record['host']}  ->  {record['value']}")
 
 # ── 3. Ask Tratto to check them once DNS has propagated ───────────────────────
 result = tratto.domains.verify(domain_id)
-print("verification:", result["status"])
+print("verification:", result["data"]["status"])
 
 # Per-record detail, to see which one is still missing.
-detail = tratto.domains.get(domain_id)
-for record in detail["dnsRecords"]:
-    print(" ", record["type"], record["verified"])
+detail = tratto.domains.get(domain_id)["data"]
+for record in detail["records"]:
+    print(" ", record["purpose"], record["verified"])
 
 # ── 4. List every sender domain in the workspace ──────────────────────────────
 page = tratto.domains.list(limit=25)

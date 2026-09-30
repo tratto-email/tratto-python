@@ -27,17 +27,19 @@ audience = tratto.audiences.create(
         ],
     )
 )
-audience_id = audience["id"]
+# Every response is wrapped in an envelope: the payload is under "data".
+audience_id = audience["data"]["id"]
 print("created", audience_id)
 
 # ── 2. A static audience: no rules, you add the members yourself ──────────────
 static = tratto.audiences.create(CreateAudienceOptions(name="Launch invitees"))
 
 # Up to 500 contact IDs per call.
-tratto.audiences.add_contacts(static["id"], ["con_123", "con_456"])
+added = tratto.audiences.add_contacts(static["data"]["id"], ["con_123", "con_456"])
+print("added:", added["data"]["added"], "already there:", added["data"]["alreadyInAudience"])
 
 # ── 3. Read back a single audience with its rules ─────────────────────────────
-detail = tratto.audiences.get(audience_id)
+detail = tratto.audiences.get(audience_id)["data"]
 for rule in detail["rules"]:
     print(" ", rule["field"], rule["operator"], rule["value"])
 

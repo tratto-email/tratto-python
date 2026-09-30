@@ -16,7 +16,8 @@ tratto = Tratto(api_key)
 
 # ── 1. Totals for a period ────────────────────────────────────────────────────
 # 7d, 30d, 90d, 180d or 1y. A test key is limited to 90d and below.
-summary = tratto.analytics.get_summary("30d")
+# Every response is wrapped in an envelope: the payload is under "data".
+summary = tratto.analytics.get_summary("30d")["data"]
 
 print("Last 30 days")
 print(f"  sent       {summary['totalSent']}")
