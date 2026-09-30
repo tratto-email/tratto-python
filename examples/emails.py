@@ -35,8 +35,8 @@ except TrattoError as err:
     raise SystemExit(f"send failed [{err.code}/{err.status_code}]: {err}") from err
 
 # Every response is wrapped in an envelope: the payload is under "data".
-email_id = sent["data"]["id"]
-print("sent", email_id, "livemode:", sent["data"]["livemode"])
+email_id = sent["id"]
+print("sent", email_id, "livemode:", sent["livemode"])
 
 # ── 2. Send from a saved template, with variables ─────────────────────────────
 tratto.emails.send(

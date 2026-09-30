@@ -146,8 +146,8 @@ def main() -> int:
                 tags=["sdk-smoke"],
             )
         )
-        email_id = sent["data"]["id"]
-        livemode = sent["data"].get("livemode")
+        email_id = sent["id"]
+        livemode = sent.get("livemode")
         if livemode is not False:
             raise RuntimeError(f"expected livemode false on a test key, got {livemode!r}")
         step(f"email sent: {email_id} (livemode false)")

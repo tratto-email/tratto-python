@@ -20,18 +20,50 @@ import pytest
 ENVELOPE_KEYS = {"data", "pagination"}
 
 ROOT = Path(__file__).resolve().parent.parent
+
+
+def _unwrapping_methods() -> set[tuple[str, str]]:
+    """``(resource, method)`` for the methods that return the payload directly.
+
+    Not a hand-written list: it is read out of the SDK, so it stays true when a
+    method starts or stops unwrapping. Today there is exactly one — ``emails.send``
+    ends with ``result.get("data", result)`` while the other 55 return the whole
+    envelope — and that inconsistency is tracked in tratto-python#28.
+    """
+    found: set[tuple[str, str]] = set()
+    for mod in sorted((ROOT / "tratto" / "resources").glob("*.py")):
+        tree = ast.parse(mod.read_text())
+        for node in ast.walk(tree):
+            # ast.unparse normalises quotes, so match both spellings rather
+            # than the one the source happens to use.
+            body = ast.unparse(node)
+            if isinstance(node, ast.FunctionDef) and (
+                'get("data"' in body or "get('data'" in body
+            ):
+                found.add((mod.stem, node.name))
+    return found
+
+
+UNWRAPPING = _unwrapping_methods()
+
 SOURCES = sorted(ROOT.glob("examples/*.py")) + [ROOT / "scripts" / "staging_smoke.py"]
 
 
 def _is_sdk_call(node: ast.AST) -> bool:
-    """True for ``tratto.<resource>.<method>(...)``."""
-    return (
+    """True for ``tratto.<resource>.<method>(...)`` that returns the envelope.
+
+    A method that unwraps is excluded: reading ``sent["id"]`` off it is correct,
+    and flagging it would push the examples back to a wrong form.
+    """
+    if not (
         isinstance(node, ast.Call)
         and isinstance(node.func, ast.Attribute)
         and isinstance(node.func.value, ast.Attribute)
         and isinstance(node.func.value.value, ast.Name)
         and node.func.value.value.id == "tratto"
-    )
+    ):
+        return False
+    return (node.func.value.attr, node.func.attr) not in UNWRAPPING
 
 
 def _key(node: ast.Subscript) -> object:
@@ -84,3 +116,13 @@ def test_the_guard_catches_a_bad_read() -> None:
     assert _offences(bad), "guard is blind to a raw read — it would pass on anything"
     good = "contact = tratto.contacts.create(options)\nprint(contact['data']['id'])\n"
     assert not _offences(good), "guard flags a correct read"
+
+
+def test_the_unwrapping_list_is_not_empty() -> None:
+    """An empty exception list would silently restore the old, wrong rule.
+
+    If this fails, the derivation stopped finding the methods that unwrap — the
+    guard is then stricter than the SDK and will flag correct code.
+    """
+    assert UNWRAPPING, "no unwrapping method found: the derivation is broken"
+    assert ("emails", "send") in UNWRAPPING

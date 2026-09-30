@@ -33,7 +33,7 @@ result = client.emails.send(SendEmailOptions(
     subject="Welcome to our platform!",
     html="<h1>Welcome!</h1><p>Thanks for signing up.</p>",
 ))
-print(result["data"]["id"])  # email_…
+print(result["id"])  # email_…
 ```
 
 Every response is wrapped in an envelope: the payload is under `"data"`, and
@@ -120,7 +120,7 @@ result = client.emails.send(SendEmailOptions(
     reply_to="support@acme.com",
     tags=["order", "shipping"],
 ))
-print(result["data"]["id"])  # email_…
+print(result["id"])  # email_…
 ```
 
 **With a saved template:**
@@ -574,7 +574,7 @@ def send_welcome_email(user) -> str:
         template_id=settings.TRATTO_WELCOME_TEMPLATE_ID,
         variables={"first_name": user.first_name},
     ))
-    return result["data"]["id"]
+    return result["id"]
 ```
 
 ```python
@@ -691,7 +691,7 @@ async def confirm_order(
         ),
     )
     result = await asyncio.get_event_loop().run_in_executor(None, send)
-    return {"email_id": result["data"]["id"]}
+    return {"email_id": result["id"]}
 ```
 
 ---
@@ -728,7 +728,7 @@ def register():
             subject="Welcome!",
             html=f"<p>Hi {user['name']}, thanks for signing up!</p>",
         ))
-        app.logger.info("Welcome email sent: %s", result["data"]["id"])
+        app.logger.info("Welcome email sent: %s", result["id"])
     except TrattoError as e:
         app.logger.error("Email failed [%s]: %s", e.code, e)
     return jsonify({"id": user["id"]}), 201
