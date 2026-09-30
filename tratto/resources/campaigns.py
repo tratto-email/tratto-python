@@ -95,6 +95,25 @@ class CampaignsResource:
             "POST", f"/v1/campaigns/{campaign_id}/send", body=body
         )
 
+    def unschedule(self, campaign_id: str) -> dict:
+        """Cancel a scheduled campaign and return it to *draft*.
+
+        Only campaigns in *scheduled* status can be unscheduled, and the
+        scheduled date is cleared.
+
+        Returns ``{"data": {"id": str, "status": "draft", "scheduledAt": None}}``.
+
+        Raises:
+            TrattoError: ``CONFLICT`` (409) if the campaign is no longer
+                unschedulable — the send already started, or a bounce-probe
+                wave went out and the campaign is waiting for its bounce rate.
+                In both cases part of the list may already have been reached:
+                use :meth:`pause` to stop it instead. The response carries a
+                ``suggestion`` saying so; the two cases share the ``CONFLICT``
+                code and differ only in the message.
+        """
+        return self._http._request("POST", f"/v1/campaigns/{campaign_id}/unschedule")
+
     def pause(self, campaign_id: str) -> dict:
         """Pause a *sending* or *scheduled* campaign.
 

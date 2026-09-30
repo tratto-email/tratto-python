@@ -373,6 +373,10 @@ client.campaigns.send(campaign_id)
 # Or schedule
 client.campaigns.send(campaign_id, scheduled_at="2025-01-15T10:00:00Z")
 
+# Cancel the schedule, back to draft (409 CONFLICT once the send started,
+# or once a bounce-probe wave went out: pause it instead)
+client.campaigns.unschedule(campaign_id)
+
 # Pause
 client.campaigns.pause(campaign_id)
 
