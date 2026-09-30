@@ -789,6 +789,24 @@ Full API documentation: [docs.tratto.email](https://docs.tratto.email)
 
 ---
 
+## Examples
+
+Runnable examples live in [`examples/`](./examples), one per resource:
+[emails](./examples/emails.py), [contacts](./examples/contacts.py),
+[audiences](./examples/audiences.py), [templates](./examples/templates.py),
+[domains](./examples/domains.py), [campaigns](./examples/campaigns.py),
+[webhooks](./examples/webhooks.py), [flows](./examples/flows.py),
+[analytics](./examples/analytics.py), [workspace](./examples/workspace.py).
+
+```bash
+TRATTO_API_KEY=tratto_test_... python examples/emails.py
+```
+
+They are linted and typechecked with the package, so a renamed method or a
+changed option type breaks the build instead of a customer's code.
+
+---
+
 ## Contributing
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for setup instructions and guidelines.

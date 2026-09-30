@@ -61,13 +61,57 @@ Tests live in `tests/` and **must not make real network requests** — use
 
 ```bash
 # Style
-ruff check tratto tests
+ruff check tratto tests examples scripts
 
 # Types
-mypy tratto
+mypy tratto examples scripts
 ```
 
-All checks must pass before a PR is merged.
+All checks must pass before a PR is merged. `examples/` and `scripts/` are in
+the perimeter on purpose: the examples are the public API used the way a
+customer uses it, so a renamed method or a changed option type breaks the lint
+job instead of a customer's build.
+
+Note that the resource methods return a bare `dict`, so the checks catch
+mistakes in the **calls** (unknown method, wrong argument type) but not in the
+**response** fields an example reads: `email["stauts"]` typechecks fine. Only
+the staging smoke test below catches that.
+
+Your local `ruff` can be older than CI's, which installs the latest release on
+every run. Run `pip install -U ruff mypy` before trusting a green local check.
+
+---
+
+## Staging smoke test (manual, before a release)
+
+Everything in `tests/` mocks the network, so nothing in CI notices if the API
+renames a field. `scripts/staging_smoke.py` is the one thing that does: it runs
+a real round-trip against `api-staging.tratto.email` — create a contact, create
+and publish a template, send an email, read its status and events back — and
+removes what it created.
+
+It is **not** in CI, by design: the org has a hard 3000 min/month Actions
+budget. It is a manual rite, run before publishing a release, like the
+dashboard E2E suite.
+
+```bash
+cp .env.example .env     # .env is gitignored, the key never enters the repo
+# fill in TRATTO_API_KEY and TRATTO_FROM_EMAIL
+python scripts/staging_smoke.py
+```
+
+- **The key must be a test key** (`tratto_test_…`). The script refuses a live
+  one: sends go to `delivered@simulator.tratto.email`, so no real inbox is
+  touched and the account's bounce rate does not move.
+- A missing variable stops the run **naming the variable**. There is no silent
+  skip: a check that quietly does nothing is worse than no check.
+- **No flows.** They are the only v1 resource without fine-grained scopes, so
+  covering them would need a key with the `*` permission. They stay in
+  `examples/flows.py`, out of the executable script.
+- **One residue is expected**: the API has no delete route for contacts, so the
+  smoke contact is left unsubscribed at a `@simulator.tratto.email` address.
+  The script says so on the last line.
+- Revoke the key when you are done.
 
 ---
 
@@ -80,14 +124,15 @@ All checks must pass before a PR is merged.
    ```
 3. Make your changes. Keep commits focused and descriptive.
 4. Add or update tests for every changed behaviour.
-5. Run `pytest`, `ruff check`, and `mypy tratto` locally — fix any failures.
+5. Run `pytest`, `ruff check`, and `mypy` locally — fix any failures.
 6. Push your branch and open a PR against `main`.
 
 ### PR checklist
 
 - [ ] Tests added or updated
-- [ ] `ruff check tratto tests` passes
-- [ ] `mypy tratto` passes
+- [ ] `ruff check tratto tests examples scripts` passes
+- [ ] `mypy tratto examples scripts` passes
+- [ ] A new public method has an example in `examples/`
 - [ ] Public API changes reflected in `README.md`
 
 ---
@@ -113,6 +158,9 @@ tratto-python/
 │       ├── flows.py
 │       ├── analytics.py
 │       └── workspace.py
+├── examples/                # one runnable example per resource, linted+typechecked
+├── scripts/
+│   └── staging_smoke.py     # manual round-trip against api-staging
 ├── tests/
 │   └── test_client.py
 ├── pyproject.toml
@@ -127,7 +175,7 @@ tratto-python/
 
 - **No external runtime dependencies.** The SDK uses only Python's standard library.
 - **Python 3.10+** — use native generics (`list[str]`, `dict[str, str]`, `str | None`).
-- **Strict type hints** on all public functions and methods (enforced by `mypy tratto`, config in `[tool.mypy]` of `pyproject.toml`).
+- **Strict type hints** on all public functions and methods (enforced by `mypy`, config in `[tool.mypy]` of `pyproject.toml`).
 - **Dataclasses for option objects** — one per write operation, matching the API body.
 - **snake_case** in Python maps to **camelCase** in JSON request bodies and responses.
 - **Resource sub-clients** — each API resource group has its own class in `tratto/resources/`.
@@ -154,6 +202,7 @@ a bump re-run `pip install -e ".[dev]"` for your local install to report the new
 
 ## Release process (maintainers only)
 
+0. Run the [staging smoke test](#staging-smoke-test-manual-before-a-release).
 1. Bump `version` in `pyproject.toml`.
 2. Commit and merge to `main`.
 3. Push a tag:

@@ -30,8 +30,8 @@ jobs:
       - uses: actions/setup-python@v5
         with: { python-version: '3.12' }
       - run: pip install ruff mypy
-      - run: ruff check tratto tests
-      - run: mypy tratto
+      - run: ruff check tratto tests examples scripts
+      - run: mypy tratto examples scripts
 
   build:
     runs-on: ubuntu-latest
