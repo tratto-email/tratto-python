@@ -14,6 +14,26 @@ except PackageNotFoundError:  # source checkout never pip-installed
     _SDK_VERSION = "0.0.0+unknown"
 
 
+def _tratto_error(e: HTTPError) -> TrattoError:
+    """Turn an HTTP error response into a :class:`TrattoError`.
+
+    Both request paths go through here, so a field read once is read by the
+    whole SDK. ``suggestion`` and ``docs`` are optional in the API payload:
+    absent means ``None``, never an empty string.
+    """
+    try:
+        err = json.loads(e.read()).get("error", {})
+    except Exception:  # noqa: BLE001 — error body may not be valid JSON at all
+        err = {}
+    return TrattoError(
+        err.get("message", str(e)),
+        err.get("code", "unknown_error"),
+        e.code,
+        suggestion=err.get("suggestion"),
+        docs=err.get("docs"),
+    )
+
+
 class HttpClient:
     def __init__(self, api_key: str, base_url: str = DEFAULT_BASE_URL) -> None:
         if not api_key:
@@ -52,16 +72,7 @@ class HttpClient:
                 raw = res.read()
                 return json.loads(raw) if raw else {}
         except HTTPError as e:
-            try:
-                payload = json.loads(e.read())
-                err = payload.get("error", {})
-            except Exception:  # noqa: BLE001 — error body may not be valid JSON at all
-                err = {}
-            raise TrattoError(
-                err.get("message", str(e)),
-                err.get("code", "unknown_error"),
-                e.code,
-            ) from e
+            raise _tratto_error(e) from e
 
     def _request_raw(
         self,
@@ -88,13 +99,4 @@ class HttpClient:
                 raw = res.read()
                 return json.loads(raw) if raw else {}
         except HTTPError as e:
-            try:
-                payload = json.loads(e.read())
-                err = payload.get("error", {})
-            except Exception:  # noqa: BLE001 — error body may not be valid JSON at all
-                err = {}
-            raise TrattoError(
-                err.get("message", str(e)),
-                err.get("code", "unknown_error"),
-                e.code,
-            ) from e
+            raise _tratto_error(e) from e

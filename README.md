@@ -504,7 +504,16 @@ except TrattoError as e:
     print(e)              # human-readable message
     print(e.code)         # machine-readable code, e.g. "NOT_FOUND"
     print(e.status_code)  # HTTP status, e.g. 404
+    print(e.suggestion)   # what to do about it, or None if the API sends none
+    print(e.docs)         # link to the error docs, or None
 ```
+
+`suggestion` and `docs` are whatever the API sent, and are `None` when it sent
+nothing — never an empty string. `suggestion` is the field to read where one
+code covers several situations: both 409s on `campaigns.send` and
+`campaigns.unschedule` are `CONFLICT`, and only the suggestion says whether to
+wait and retry or to pause the campaign instead. Branch on `code` plus
+`suggestion`, never on the message text.
 
 **Common error codes:**
 

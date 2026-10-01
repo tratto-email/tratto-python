@@ -9,12 +9,28 @@ class TrattoError(Exception):
     Attributes:
         code: Machine-readable error code (e.g. ``"NOT_FOUND"``).
         status_code: HTTP status code (e.g. ``404``).
+        suggestion: What to do about it, in the API's own words, when it sends
+            one: ``None`` when the error carries no suggestion. Useful where
+            several situations share one *code* and only this text tells them
+            apart, e.g. the 409 on ``campaigns.send`` / ``campaigns.unschedule``.
+        docs: Link to the error documentation, when the API sends one, else
+            ``None``.
     """
 
-    def __init__(self, message: str, code: str, status_code: int) -> None:
+    def __init__(
+        self,
+        message: str,
+        code: str,
+        status_code: int,
+        *,
+        suggestion: str | None = None,
+        docs: str | None = None,
+    ) -> None:
         super().__init__(message)
         self.code = code
         self.status_code = status_code
+        self.suggestion = suggestion
+        self.docs = docs
 
 
 # ── Email types ───────────────────────────────────────────────────────────────

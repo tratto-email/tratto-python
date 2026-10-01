@@ -607,3 +607,64 @@ class TestWorkspace:
         with patch(PATCH_URLOPEN, return_value=_mock_response({})) as m:
             self.client.workspace.remove_member("uid_1")
         assert m.call_args[0][0].get_method() == "DELETE"
+
+
+# ── Error payload: suggestion + docs (#24) ───────────────────────────────────────────────
+
+class TestErrorFields:
+    """`suggestion` e `docs` arrivano a chi integra, su entrambi i percorsi HTTP."""
+
+    def setup_method(self):
+        self.client = Tratto("tratto_live_test")
+
+    def test_json_path_exposes_suggestion_and_docs(self):
+        body = {
+            "error": {
+                "code": "CONFLICT",
+                "message": "Campaign is paused while its bounce rate is checked.",
+                "suggestion": "Wait for the probe window to expire, then send again.",
+                "docs": "https://docs.tratto.email/errors",
+            }
+        }
+        with (
+            patch(PATCH_URLOPEN, side_effect=_http_error(body, 409)),
+            pytest.raises(TrattoError) as e,
+        ):
+            self.client.campaigns.send("camp_abc123")
+        # Niente confronto su `message`: è il punto della issue.
+        assert e.value.suggestion == "Wait for the probe window to expire, then send again."
+        assert e.value.docs == "https://docs.tratto.email/errors"
+
+    def test_raw_path_exposes_suggestion_and_docs(self):
+        # contacts.import_csv passa da _request_raw: l'altro percorso che costruisce l'errore.
+        body = {
+            "error": {
+                "code": "VALIDATION_ERROR",
+                "message": "Request validation failed.",
+                "suggestion": "The CSV needs an `email` column.",
+                "docs": "https://docs.tratto.email/errors",
+            }
+        }
+        with (
+            patch(PATCH_URLOPEN, side_effect=_http_error(body, 422)),
+            pytest.raises(TrattoError) as e,
+        ):
+            self.client.contacts.import_csv("name\nalice")
+        assert e.value.suggestion == "The CSV needs an `email` column."
+        assert e.value.docs == "https://docs.tratto.email/errors"
+
+    def test_missing_fields_are_none_not_empty_string(self):
+        # Il terzo 409 di unschedule non porta né suggestion né docs.
+        body = {"error": {"code": "CONFLICT", "message": "Campaign is not scheduled."}}
+        with (
+            patch(PATCH_URLOPEN, side_effect=_http_error(body, 409)),
+            pytest.raises(TrattoError) as e,
+        ):
+            self.client.campaigns.unschedule("camp_abc123")
+        assert e.value.suggestion is None
+        assert e.value.docs is None
+
+    def test_three_positional_args_still_build(self):
+        # Compatibilità all'indietro: chi lo costruisce nei propri test non cambia riga.
+        err = TrattoError("boom", "CONFLICT", 409)
+        assert (err.code, err.status_code, err.suggestion, err.docs) == ("CONFLICT", 409, None, None)
