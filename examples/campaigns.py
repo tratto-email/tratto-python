@@ -6,7 +6,7 @@ Run:
 
 import os
 
-from tratto import CreateCampaignOptions, Tratto
+from tratto import CreateCampaignOptions, Tratto, TrattoError
 
 api_key = os.environ.get("TRATTO_API_KEY")
 if not api_key:
@@ -62,7 +62,16 @@ def send_it(campaign_id: str) -> None:
 
     # Cancel a schedule and go back to draft. Once the send has started, or a
     # bounce-probe wave has gone out, this returns 409 CONFLICT: pause instead.
-    tratto.campaigns.unschedule(campaign_id)
+    # Those cases share the CONFLICT code, so read `err.suggestion` — the API
+    # spells out what to do there — instead of matching on the message text.
+    try:
+        tratto.campaigns.unschedule(campaign_id)
+    except TrattoError as err:
+        print(f"unschedule refused [{err.code}]: {err}")
+        if err.suggestion:
+            print("what to do:", err.suggestion)
+        if err.docs:
+            print("more:", err.docs)
 
     # Stop a campaign that is already sending.
     tratto.campaigns.pause(campaign_id)
