@@ -63,8 +63,6 @@ def manage_the_team(user_id: str) -> None:
     tratto.workspace.remove_member(user_id)
 
 
-def delete_everything() -> None:
-    """Not called here, and not by accident either: this erases the workspace
-    and every contact, template, campaign and email in it, permanently.
-    """
-    tratto.workspace.delete()
+# A workspace is deleted from the dashboard, by its owner. The API refuses
+# DELETE /v1/workspace for every API key, so tratto.workspace.delete() is
+# deprecated: it cannot succeed.
