@@ -82,11 +82,18 @@ class WorkspaceResource:
         )
 
     def invite_member(self, email: str, role: str) -> dict:
-        """Invite someone to the workspace by email.
+        """Deprecated: this call cannot succeed.
 
-        Args:
-            role: ``admin`` or ``member``.
+        The API refuses ``POST /v1/workspace/members/invite`` for every API
+        key (403): members are invited from the dashboard, by the workspace
+        owner. This method will be removed in the next major version.
         """
+        warnings.warn(
+            "workspace.invite_member() is deprecated: the API refuses it for "
+            "every API key. Invite members from the dashboard.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return self._http._request(
             "POST",
             "/v1/workspace/members/invite",
@@ -100,8 +107,16 @@ class WorkspaceResource:
         )
 
     def remove_member(self, user_id: str) -> None:
-        """Remove a member from the workspace.
+        """Deprecated: this call cannot succeed.
 
-        The owner cannot be removed; the API answers 409.
+        The API refuses ``DELETE /v1/workspace/members/:userId`` for every
+        API key (403): members are removed from the dashboard, by the
+        workspace owner. This method will be removed in the next major version.
         """
+        warnings.warn(
+            "workspace.remove_member() is deprecated: the API refuses it for "
+            "every API key. Remove members from the dashboard.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         self._http._request("DELETE", f"/v1/workspace/members/{user_id}")

@@ -47,20 +47,14 @@ prefs = tratto.workspace.update_preferences(
 print("locale:", prefs["data"]["locale"])
 
 
-def manage_the_team(user_id: str) -> None:
-    """Not called here. Inviting is restricted: with an API key it always
-    answers 403 MEMBER_INVITES_RESTRICTED, since an invite has to come from a
-    signed-in user. ``workspace["canInviteMembers"]`` tells you whether this
-    workspace may invite at all.
+def change_a_role(user_id: str) -> None:
+    """Not called here. Members are invited and removed from the dashboard by
+    the workspace owner; the API refuses those calls for API keys, so
+    ``invite_member()`` and ``remove_member()`` are deprecated. Changing a
+    role is still allowed: ``user_id`` is read from the Team page of the
+    dashboard. Roles: admin, member.
     """
-    invite = tratto.workspace.invite_member("newcomer@acme.com", "member")
-    print("invited", invite["data"]["email"], "as", invite["data"]["role"])
-
-    # Roles: admin, member.
     tratto.workspace.update_member(user_id, "admin")
-
-    # A removed member loses access immediately, and the last owner cannot go.
-    tratto.workspace.remove_member(user_id)
 
 
 # A workspace is deleted from the dashboard, by its owner. The API refuses
