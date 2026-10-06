@@ -597,9 +597,12 @@ class TestWorkspace:
         ):
             self.client.workspace.delete()
 
-    def test_invite_member_sends_email_and_role(self):
+    def test_invite_member_is_deprecated(self):
         resp = {"data": {"userId": "inv_abc", "role": "admin"}}
-        with patch(PATCH_URLOPEN, return_value=_mock_response(resp)) as m:
+        with (
+            patch(PATCH_URLOPEN, return_value=_mock_response(resp)) as m,
+            pytest.warns(DeprecationWarning, match="dashboard"),
+        ):
             self.client.workspace.invite_member("dev@example.com", "admin")
         body = json.loads(m.call_args[0][0].data.decode())
         assert body == {"email": "dev@example.com", "role": "admin"}
@@ -610,8 +613,11 @@ class TestWorkspace:
             self.client.workspace.update_member("uid_1", "member")
         assert m.call_args[0][0].full_url.endswith("/v1/workspace/members/uid_1")
 
-    def test_remove_member(self):
-        with patch(PATCH_URLOPEN, return_value=_mock_response({})) as m:
+    def test_remove_member_is_deprecated(self):
+        with (
+            patch(PATCH_URLOPEN, return_value=_mock_response({})) as m,
+            pytest.warns(DeprecationWarning, match="dashboard"),
+        ):
             self.client.workspace.remove_member("uid_1")
         assert m.call_args[0][0].get_method() == "DELETE"
 

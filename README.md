@@ -480,10 +480,13 @@ workspace = client.workspace.get()
 # The default sender must be on a domain already verified for this workspace
 client.workspace.update({"defaultFromEmail": "hello@yourdomain.com"})
 
-client.workspace.invite_member("dev@example.com", "admin")
+# Roles: admin, member. The user id is read from the Team page of the dashboard
 client.workspace.update_member("uid_1", "member")
-client.workspace.remove_member("uid_1")
 ```
+
+Members are invited and removed from the dashboard by the workspace owner; the
+API refuses these calls for API keys, so `invite_member()` and `remove_member()`
+are deprecated.
 
 API keys are deliberately **not** part of the SDK: they are issued from the
 dashboard, where the raw value is shown once and its permissions are chosen
