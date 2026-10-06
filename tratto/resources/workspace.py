@@ -1,4 +1,6 @@
 
+import warnings
+
 from .._http import HttpClient
 
 
@@ -59,7 +61,18 @@ class WorkspaceResource:
         return self._http._request("PATCH", "/v1/workspace", body=options)
 
     def delete(self) -> None:
-        """Permanently delete the workspace and everything in it."""
+        """Deprecated: this call cannot succeed.
+
+        The API refuses ``DELETE /v1/workspace`` for every API key (403): a
+        workspace is deleted from the dashboard, by its owner. This method
+        will be removed in the next major version.
+        """
+        warnings.warn(
+            "workspace.delete() is deprecated: the API refuses it for every "
+            "API key. Delete the workspace from the dashboard.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         self._http._request("DELETE", "/v1/workspace")
 
     def update_preferences(self, options: dict) -> dict:

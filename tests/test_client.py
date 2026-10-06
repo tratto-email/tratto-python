@@ -590,6 +590,13 @@ class TestWorkspace:
             self.client.workspace.update_preferences({"language": "it"})
         assert m.call_args[0][0].full_url.endswith("/v1/workspace/preferences")
 
+    def test_delete_is_deprecated(self):
+        with (
+            patch(PATCH_URLOPEN, return_value=_mock_response({}, status=204)),
+            pytest.warns(DeprecationWarning, match="dashboard"),
+        ):
+            self.client.workspace.delete()
+
     def test_invite_member_sends_email_and_role(self):
         resp = {"data": {"userId": "inv_abc", "role": "admin"}}
         with patch(PATCH_URLOPEN, return_value=_mock_response(resp)) as m:
