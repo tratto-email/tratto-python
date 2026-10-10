@@ -1,10 +1,22 @@
 # tratto-python
 
-Official Python SDK for [Tratto](https://tratto.email) — the accessible transactional and marketing email platform for startups and non-profits.
+Official Python SDK for [Tratto](https://tratto.email/en?utm_source=pypi), an
+email API hosted in the EU: transactional email, campaigns and automation flows
+from one REST API. Data is stored in EU regions (Firestore `eur3`, BigQuery
+`europe-west1`) and email is sent through AWS SES `eu-west-1`; every provider is
+listed on the [sub-processors page](https://tratto.email/en/sub-processors?utm_source=pypi).
 
 [![PyPI](https://img.shields.io/pypi/v/tratto-email)](https://pypi.org/project/tratto-email/)
 [![Python](https://img.shields.io/pypi/pyversions/tratto-email)](https://pypi.org/project/tratto-email/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
+
+> **Private beta.** Tratto is invite-only for now: invites go out in small
+> batches, and invited accounts start on the Free plan. To get an API key,
+> [request an invite](https://tratto.email/en?utm_source=pypi#waitlist).
+
+**Links:** [Documentation](https://docs.tratto.email/en/docs/sdk-python) ·
+[API reference](https://docs.tratto.email/en/docs/api-reference-intro) ·
+[Node.js SDK](https://www.npmjs.com/package/@tratto/email)
 
 **No external dependencies** — uses Python's built-in `urllib`.
 Requires **Python 3.10+**.
@@ -59,7 +71,7 @@ template whose HTML is rendered and pinned at save time.
 
 ## Authentication
 
-Create an API key in the [Tratto dashboard](https://app.tratto.email/settings/api-keys) and pass it to the client.
+Create an API key in the [Tratto dashboard](https://app.tratto.email/settings/api-keys) and pass it to the client. During the private beta this needs an invited account.
 
 ```python
 client = Tratto("tratto_live_…")
