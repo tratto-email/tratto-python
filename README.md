@@ -108,8 +108,8 @@ The recipient address picks the outcome (any other address simulates a normal de
 | Recipient | Outcome |
 |---|---|
 | `delivered@simulator.tratto.email` | `delivered` event |
-| `bounced@simulator.tratto.email` | permanent bounce → email ends `failed` |
-| `soft-bounced@simulator.tratto.email` | transient bounce |
+| `bounced@simulator.tratto.email` | permanent bounce → email ends `bounced` |
+| `soft-bounced@simulator.tratto.email` | transient bounce → email also ends `bounced` |
 | `complained@simulator.tratto.email` | spam complaint event |
 
 Responses and webhook payloads carry `livemode: false`; a test key only ever sees test data; test emails are retained for 7 days; endpoints that reach real recipients (campaign send, template test-send, flow activation) reject test keys with `403 TEST_MODE_NOT_SUPPORTED`. Going live is a one-line change: swap in a `tratto_live_…` key (verified sender domain required).
