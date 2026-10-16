@@ -55,8 +55,10 @@ class WorkspaceResource:
 
         Which type applies where: ``marketing`` for campaigns and template test
         sends, ``automation`` for the emails a flow sends (resolved when the
-        flow is activated), ``transactional`` for API sends that carry no
-        ``from`` of their own.
+        flow is activated), ``transactional`` for ``emails.send`` calls that
+        omit ``from_``. Such a send takes ``transactional`` if set, else the
+        workspace-wide default, else the API answers 422. Its ``replyTo``
+        applies only when the send carries no ``reply_to`` of its own.
         """
         return self._http._request("PATCH", "/v1/workspace", body=options)
 

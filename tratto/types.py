@@ -35,17 +35,25 @@ class TrattoError(Exception):
 
 # ── Email types ───────────────────────────────────────────────────────────────
 
-@dataclass
+@dataclass(kw_only=True)
 class SendEmailOptions:
     """Options for sending a transactional email.
 
     At least one of *html*, *text*, or *template_id* is required.
+
+    Build it with keyword arguments: positional construction raises
+    ``TypeError`` (since 2.0.0).
     """
 
-    from_: str
+    from_: str | None = None
     """Sender address. Must use a verified domain.
 
     Accepts either ``'user@domain.com'`` or ``'Display Name <user@domain.com>'``.
+
+    Omit it to use the workspace's transactional sender
+    (``senders.transactional``), or the workspace-wide default sender when no
+    transactional sender is set. With neither configured the API answers 422
+    ``VALIDATION_ERROR``.
     """
 
     to: str | list[str]
@@ -95,7 +103,7 @@ class SendEmailOptions:
 ContactStatus = Literal["subscribed", "unsubscribed", "bounced", "complained"]
 
 
-@dataclass
+@dataclass(kw_only=True)
 class CreateContactOptions:
     """Options for creating a contact."""
 
@@ -107,7 +115,7 @@ class CreateContactOptions:
     custom_fields: dict[str, object] = field(default_factory=dict)
 
 
-@dataclass
+@dataclass(kw_only=True)
 class UpdateContactOptions:
     """Options for updating a contact. Only supplied fields are changed."""
 
@@ -126,7 +134,7 @@ AudienceOperator = Literal[
 ]
 
 
-@dataclass
+@dataclass(kw_only=True)
 class AudienceRule:
     """A single segmentation rule for an audience."""
 
@@ -141,7 +149,7 @@ class AudienceRule:
     """Value to compare against."""
 
 
-@dataclass
+@dataclass(kw_only=True)
 class CreateAudienceOptions:
     """Options for creating an audience."""
 
@@ -156,7 +164,7 @@ class CreateAudienceOptions:
 TemplateStatus = Literal["draft", "published"]
 
 
-@dataclass
+@dataclass(kw_only=True)
 class CreateTemplateOptions:
     """Options for creating an email template."""
 
@@ -171,7 +179,7 @@ class CreateTemplateOptions:
     HTML is rendered server-side at save time. Mutually exclusive with *html*."""
 
 
-@dataclass
+@dataclass(kw_only=True)
 class UpdateTemplateOptions:
     """Options for updating a template. Only supplied fields are changed.
 
@@ -191,7 +199,7 @@ class UpdateTemplateOptions:
 CampaignStatus = Literal["draft", "sending", "scheduled", "paused", "completed"]
 
 
-@dataclass
+@dataclass(kw_only=True)
 class CreateCampaignOptions:
     """Options for creating a marketing campaign."""
 
@@ -224,7 +232,7 @@ WebhookEventType = Literal[
 ]
 
 
-@dataclass
+@dataclass(kw_only=True)
 class CreateWebhookOptions:
     """Options for registering a webhook endpoint."""
 

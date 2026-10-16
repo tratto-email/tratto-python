@@ -1,3 +1,4 @@
+import dataclasses
 import json
 from io import BytesIO
 from unittest.mock import MagicMock, patch
@@ -5,6 +6,7 @@ from urllib.error import HTTPError
 
 import pytest
 
+import tratto.types
 from tratto import (
     AudienceRule,
     CreateAudienceOptions,
@@ -22,6 +24,44 @@ from tratto import (
 # ── Helpers ───────────────────────────────────────────────────────────────────────────────
 
 PATCH_URLOPEN = "tratto._http.urlopen"
+
+# 2.0.0: every option class is keyword-only, so a required field can later
+# become optional without another major (#19).
+OPTION_CLASSES = {
+    SendEmailOptions,
+    CreateContactOptions,
+    UpdateContactOptions,
+    AudienceRule,
+    CreateAudienceOptions,
+    CreateTemplateOptions,
+    UpdateTemplateOptions,
+    CreateCampaignOptions,
+    CreateWebhookOptions,
+}
+
+
+def test_option_classes_cover_every_dataclass():
+    assert OPTION_CLASSES == {
+        c
+        for c in vars(tratto.types).values()
+        if isinstance(c, type) and dataclasses.is_dataclass(c)
+    }
+
+
+@pytest.mark.parametrize(
+    "cls", sorted(OPTION_CLASSES, key=lambda c: c.__name__), ids=lambda c: c.__name__
+)
+def test_option_classes_are_keyword_only(cls):
+    # As many args as required fields (at least one): without kw_only the
+    # positional call would succeed, so TypeError can only come from kw_only.
+    names = [
+        f.name
+        for f in dataclasses.fields(cls)
+        if f.default is dataclasses.MISSING and f.default_factory is dataclasses.MISSING
+    ] or [dataclasses.fields(cls)[0].name]
+    cls(**{n: "x" for n in names})
+    with pytest.raises(TypeError):
+        cls(*["x"] * len(names))
 
 
 def _mock_response(data: dict, status: int = 200):
@@ -96,6 +136,30 @@ class TestEmails:
                 html="<p>Hello</p>",
             ))
         assert result["id"] == "email_abc123"
+
+    def test_send_without_from_omits_from_key(self):
+        resp = {"data": {"id": "email_nofrom"}}
+        with patch(PATCH_URLOPEN, return_value=_mock_response(resp)) as mock_open:
+            self.client.emails.send(SendEmailOptions(
+                to="user@example.com",
+                subject="Hello",
+                html="<p>Hello</p>",
+            ))
+        body = json.loads(mock_open.call_args[0][0].data.decode())
+        assert "from" not in body
+        assert body == {"to": "user@example.com", "subject": "Hello", "html": "<p>Hello</p>"}
+
+    def test_send_with_from_puts_it_in_body(self):
+        resp = {"data": {"id": "email_from"}}
+        with patch(PATCH_URLOPEN, return_value=_mock_response(resp)) as mock_open:
+            self.client.emails.send(SendEmailOptions(
+                from_="Acme <hello@acme.com>",
+                to="user@example.com",
+                subject="Hello",
+                html="<p>Hello</p>",
+            ))
+        body = json.loads(mock_open.call_args[0][0].data.decode())
+        assert body["from"] == "Acme <hello@acme.com>"
 
     def test_send_with_template(self):
         resp = {"data": {"id": "email_abc123"}}
