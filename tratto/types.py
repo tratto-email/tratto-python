@@ -103,7 +103,7 @@ class SendEmailOptions:
 ContactStatus = Literal["subscribed", "unsubscribed", "bounced", "complained"]
 
 
-@dataclass
+@dataclass(kw_only=True)
 class CreateContactOptions:
     """Options for creating a contact."""
 
@@ -115,7 +115,7 @@ class CreateContactOptions:
     custom_fields: dict[str, object] = field(default_factory=dict)
 
 
-@dataclass
+@dataclass(kw_only=True)
 class UpdateContactOptions:
     """Options for updating a contact. Only supplied fields are changed."""
 
@@ -134,7 +134,7 @@ AudienceOperator = Literal[
 ]
 
 
-@dataclass
+@dataclass(kw_only=True)
 class AudienceRule:
     """A single segmentation rule for an audience."""
 
@@ -149,7 +149,7 @@ class AudienceRule:
     """Value to compare against."""
 
 
-@dataclass
+@dataclass(kw_only=True)
 class CreateAudienceOptions:
     """Options for creating an audience."""
 
@@ -164,7 +164,7 @@ class CreateAudienceOptions:
 TemplateStatus = Literal["draft", "published"]
 
 
-@dataclass
+@dataclass(kw_only=True)
 class CreateTemplateOptions:
     """Options for creating an email template."""
 
@@ -179,7 +179,7 @@ class CreateTemplateOptions:
     HTML is rendered server-side at save time. Mutually exclusive with *html*."""
 
 
-@dataclass
+@dataclass(kw_only=True)
 class UpdateTemplateOptions:
     """Options for updating a template. Only supplied fields are changed.
 
@@ -199,7 +199,7 @@ class UpdateTemplateOptions:
 CampaignStatus = Literal["draft", "sending", "scheduled", "paused", "completed"]
 
 
-@dataclass
+@dataclass(kw_only=True)
 class CreateCampaignOptions:
     """Options for creating a marketing campaign."""
 
@@ -232,7 +232,7 @@ WebhookEventType = Literal[
 ]
 
 
-@dataclass
+@dataclass(kw_only=True)
 class CreateWebhookOptions:
     """Options for registering a webhook endpoint."""
 

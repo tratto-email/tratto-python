@@ -7,10 +7,15 @@ Releases before 2.0.0 are described in the
 
 ### Breaking
 
-- `SendEmailOptions` must be built with keyword arguments. Positional
-  construction, such as `SendEmailOptions("a@b.c", "d@e.f", "Hi")`, is no
-  longer supported and raises `TypeError`. Code that already passes
-  `from_=`, `to=`, `subject=` by name keeps working unchanged (#19).
+- All option classes must be built with keyword arguments:
+  `SendEmailOptions`, `CreateContactOptions`, `UpdateContactOptions`,
+  `AudienceRule`, `CreateAudienceOptions`, `CreateTemplateOptions`,
+  `UpdateTemplateOptions`, `CreateCampaignOptions` and `CreateWebhookOptions`.
+  Positional construction, such as `SendEmailOptions("a@b.c", "d@e.f", "Hi")`
+  or `AudienceRule("plan", "equals", "pro")`, is no longer supported and
+  raises `TypeError`. Code that already passes fields by name keeps working
+  unchanged. A required field can then become optional in a later release
+  without another breaking change (#19).
 
 ### Added
 
