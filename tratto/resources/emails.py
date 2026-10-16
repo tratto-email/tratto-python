@@ -26,10 +26,11 @@ class EmailsResource:
             print(result["id"])  # email_…
         """
         body: dict = {
-            "from": options.from_,
             "to": options.to,
             "subject": options.subject,
         }
+        if options.from_ is not None:
+            body["from"] = options.from_
         if options.html is not None:
             body["html"] = options.html
         if options.markdown is not None:

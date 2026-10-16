@@ -97,6 +97,36 @@ class TestEmails:
             ))
         assert result["id"] == "email_abc123"
 
+    def test_send_without_from_omits_from_key(self):
+        resp = {"data": {"id": "email_nofrom"}}
+        with patch(PATCH_URLOPEN, return_value=_mock_response(resp)) as mock_open:
+            self.client.emails.send(SendEmailOptions(
+                to="user@example.com",
+                subject="Hello",
+                html="<p>Hello</p>",
+            ))
+        body = json.loads(mock_open.call_args[0][0].data.decode())
+        assert "from" not in body
+        assert body == {"to": "user@example.com", "subject": "Hello", "html": "<p>Hello</p>"}
+
+    def test_send_with_from_puts_it_in_body(self):
+        resp = {"data": {"id": "email_from"}}
+        with patch(PATCH_URLOPEN, return_value=_mock_response(resp)) as mock_open:
+            self.client.emails.send(SendEmailOptions(
+                from_="Acme <hello@acme.com>",
+                to="user@example.com",
+                subject="Hello",
+                html="<p>Hello</p>",
+            ))
+        body = json.loads(mock_open.call_args[0][0].data.decode())
+        assert body["from"] == "Acme <hello@acme.com>"
+
+    def test_send_options_positional_construction_raises(self):
+        # 2.0.0: kw_only. Positional args would land in the wrong fields once
+        # from_ has a default, so they must fail loudly instead.
+        with pytest.raises(TypeError):
+            SendEmailOptions("hello@acme.com", "user@example.com", "Hello")  # type: ignore[call-arg]
+
     def test_send_with_template(self):
         resp = {"data": {"id": "email_abc123"}}
         with patch(PATCH_URLOPEN, return_value=_mock_response(resp)):

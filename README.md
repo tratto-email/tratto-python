@@ -48,6 +48,12 @@ result = client.emails.send(SendEmailOptions(
 print(result["id"])  # email_…
 ```
 
+You can omit `from_` (requires tratto-email 2.0.0 or later): the API then
+uses the workspace's transactional sender, or the workspace-wide default
+sender when no transactional sender is set, and answers 422 when neither is
+configured. See [Senders](https://docs.tratto.email/en/docs/senders#transactional).
+`SendEmailOptions` takes keyword arguments only.
+
 Every response is wrapped in an envelope: the payload is under `"data"`, and
 on a list response `"data"` is the array with `"pagination"` beside it.
 

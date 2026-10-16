@@ -35,17 +35,25 @@ class TrattoError(Exception):
 
 # ── Email types ───────────────────────────────────────────────────────────────
 
-@dataclass
+@dataclass(kw_only=True)
 class SendEmailOptions:
     """Options for sending a transactional email.
 
     At least one of *html*, *text*, or *template_id* is required.
+
+    Build it with keyword arguments: positional construction raises
+    ``TypeError`` (since 2.0.0).
     """
 
-    from_: str
+    from_: str | None = None
     """Sender address. Must use a verified domain.
 
     Accepts either ``'user@domain.com'`` or ``'Display Name <user@domain.com>'``.
+
+    Omit it to use the workspace's transactional sender
+    (``senders.transactional``), or the workspace-wide default sender when no
+    transactional sender is set. With neither configured the API answers 422
+    ``VALIDATION_ERROR``.
     """
 
     to: str | list[str]
