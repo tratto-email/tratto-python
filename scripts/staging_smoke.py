@@ -3,7 +3,7 @@
 
 Everything else in this repo mocks the network, so nothing notices when the
 API renames a field. This does: it creates a contact and a template, sends an
-email, reads the result back, and removes what it can.
+email and a batch of two, reads the result back, and removes what it can.
 
 It is deliberately not wired into CI. Run it yourself:
 
@@ -151,6 +151,24 @@ def main() -> int:
         if livemode is not False:
             raise RuntimeError(f"expected livemode false on a test key, got {livemode!r}")
         step(f"email sent: {email_id} (livemode false)")
+
+        # ── Batch ─────────────────────────────────────────────────────────────
+        batch = tratto.emails.send_batch(
+            [
+                SendEmailOptions(
+                    from_=from_email, to=SIMULATOR, subject=f"SDK smoke batch {run_id} #{n}",
+                    text="batch", tags=["sdk-smoke"],
+                )
+                for n in (1, 2)
+            ],
+            idempotency_key=str(uuid.uuid4()),
+        )
+        batch_ids = [e.get("id") for e in batch["emails"]]
+        if batch["accepted"] != 2 or batch["failed"] != 0 or not all(batch_ids):
+            raise RuntimeError(f"unexpected batch result: {batch}")
+        if batch["livemode"] is not False:
+            raise RuntimeError("expected livemode false on the batch with a test key")
+        step(f"batch sent: {batch['batchId']} -> {batch_ids}")
 
         # ── Read the state back ───────────────────────────────────────────────
         status = ""

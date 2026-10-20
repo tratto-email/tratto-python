@@ -3,6 +3,21 @@
 Releases before 2.0.0 are described in the
 [GitHub releases](https://github.com/tratto-email/tratto-python/releases).
 
+## 2.1.0
+
+### Added
+
+- `emails.send_batch(emails, *, idempotency_key=None)` sends up to 100
+  emails in one request (`POST /v1/emails/batch`). Each item is a
+  `SendEmailOptions`; the idempotency key covers the whole batch, so an item
+  carrying its own `idempotency_key` raises `ValueError` before any request.
+  `scheduled_at` is not supported in a batch: the API answers 422. The
+  response is typed as `SendBatchResult`: a 202 with failed items is returned,
+  not raised, and each failed item carries an `error` and no `id` (#52).
+- `TrattoError.details`: the per-field problems of a 422 `VALIDATION_ERROR`
+  as sent by the API (e.g. `details[0]["path"] == "/emails/0/scheduledAt"`),
+  `None` when absent (#52).
+
 ## 2.0.0
 
 ### Breaking

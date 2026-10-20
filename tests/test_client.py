@@ -200,6 +200,87 @@ class TestEmails:
         assert body["markdown"] == "# Hi {{name}}"
         assert "html" not in body
 
+    def test_send_batch_body_header_and_unwrap(self):
+        resp = {"data": {"batchId": "batch_1", "livemode": False, "accepted": 2, "failed": 0,
+                         "emails": [{"id": "email_1", "status": "queued", "to": ["a@x.it"]},
+                                    {"id": "email_2", "status": "queued", "to": ["b@x.it"]}]}}
+        with patch(PATCH_URLOPEN, return_value=_mock_response(resp, 202)) as mock_open:
+            result = self.client.emails.send_batch(
+                [
+                    SendEmailOptions(to="a@x.it", subject="A", html="<p>A</p>", reply_to="r@x.it"),
+                    SendEmailOptions(from_="s@x.it", to=["b@x.it"], subject="B",
+                                     template_id="tmpl_1", variables={"n": 1}),
+                ],
+                idempotency_key="batch-key-1",
+            )
+        req = mock_open.call_args[0][0]
+        assert req.full_url.endswith("/v1/emails/batch")
+        assert req.get_method() == "POST"
+        assert req.get_header("Idempotency-key") == "batch-key-1"
+        assert json.loads(req.data.decode()) == {"emails": [
+            {"to": "a@x.it", "subject": "A", "html": "<p>A</p>", "replyTo": "r@x.it"},
+            {"from": "s@x.it", "to": ["b@x.it"], "subject": "B",
+             "templateId": "tmpl_1", "variables": {"n": 1}},
+        ]}
+        assert result["accepted"] == 2
+        assert [e["id"] for e in result["emails"]] == ["email_1", "email_2"]
+
+    def test_send_batch_partial_failure_returns_instead_of_raising(self):
+        resp = {"data": {"batchId": "batch_2", "livemode": True, "accepted": 1, "failed": 1,
+                         "emails": [
+                             {"id": "email_1", "status": "queued", "to": ["a@x.it"]},
+                             {"status": "failed", "to": ["b@x.it"],
+                              "error": {"code": "SERVICE_UNAVAILABLE", "message": "retry"}},
+                         ]}}
+        with patch(PATCH_URLOPEN, return_value=_mock_response(resp, 202)):
+            result = self.client.emails.send_batch([
+                SendEmailOptions(to="a@x.it", subject="A", text="A"),
+                SendEmailOptions(to="b@x.it", subject="B", text="B"),
+            ])
+        assert result["failed"] == 1
+        failed = [e for e in result["emails"] if e["status"] == "failed"]
+        assert failed[0]["to"] == ["b@x.it"]
+        assert failed[0]["error"]["code"] == "SERVICE_UNAVAILABLE"
+        assert "id" not in failed[0]
+
+    def test_send_batch_rejects_item_idempotency_key_without_network(self):
+        with (
+            patch(PATCH_URLOPEN) as mock_open,
+            pytest.raises(ValueError, match=r"send_batch\(\.\.\., idempotency_key"),
+        ):
+            self.client.emails.send_batch([
+                SendEmailOptions(to="a@x.it", subject="A", text="A", idempotency_key="k"),
+            ])
+        mock_open.assert_not_called()
+
+    def test_send_batch_scheduled_at_goes_to_api(self):
+        err = {"error": {"code": "VALIDATION_ERROR", "message": "invalid",
+                         "details": [{"path": "/emails/0/scheduledAt", "message": "not allowed"}]}}
+        with (
+            patch(PATCH_URLOPEN, side_effect=_http_error(err, 422)) as mock_open,
+            pytest.raises(TrattoError) as exc_info,
+        ):
+            self.client.emails.send_batch([
+                SendEmailOptions(to="a@x.it", subject="A", text="A",
+                                 scheduled_at="2030-01-01T00:00:00Z"),
+            ])
+        body = json.loads(mock_open.call_args[0][0].data.decode())
+        assert body["emails"][0]["scheduledAt"] == "2030-01-01T00:00:00Z"
+        assert exc_info.value.status_code == 422
+        assert exc_info.value.details is not None
+        assert exc_info.value.details[0]["path"] == "/emails/0/scheduledAt"
+
+    def test_send_batch_503_raises(self):
+        err = {"error": {"code": "SERVICE_UNAVAILABLE", "message": "try again"}}
+        with (
+            patch(PATCH_URLOPEN, side_effect=_http_error(err, 503)),
+            pytest.raises(TrattoError) as exc_info,
+        ):
+            self.client.emails.send_batch([SendEmailOptions(to="a@x.it", subject="A", text="A")])
+        assert exc_info.value.status_code == 503
+        assert exc_info.value.code == "SERVICE_UNAVAILABLE"
+        assert exc_info.value.details is None
+
     def test_list_emails(self):
         resp = {"data": [], "pagination": {"hasMore": False, "nextCursor": None}}
         with patch(PATCH_URLOPEN, return_value=_mock_response(resp)):

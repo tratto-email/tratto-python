@@ -26,9 +26,10 @@ def _unwrapping_methods() -> set[tuple[str, str]]:
     """``(resource, method)`` for the methods that return the payload directly.
 
     Not a hand-written list: it is read out of the SDK, so it stays true when a
-    method starts or stops unwrapping. Today there is exactly one — ``emails.send``
-    ends with ``result.get("data", result)`` while the other 55 return the whole
-    envelope — and that inconsistency is tracked in tratto-python#28.
+    method starts or stops unwrapping. Today there are two — ``emails.send`` and
+    ``emails.send_batch`` end with ``result.get("data", result)`` while the other
+    55 return the whole envelope — and that inconsistency is tracked in
+    tratto-python#28.
     """
     found: set[tuple[str, str]] = set()
     for mod in sorted((ROOT / "tratto" / "resources").glob("*.py")):
@@ -126,3 +127,4 @@ def test_the_unwrapping_list_is_not_empty() -> None:
     """
     assert UNWRAPPING, "no unwrapping method found: the derivation is broken"
     assert ("emails", "send") in UNWRAPPING
+    assert ("emails", "send_batch") in UNWRAPPING
