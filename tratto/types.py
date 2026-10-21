@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Literal
+from typing import Literal, TypedDict
 
 # ── Errors ────────────────────────────────────────────────────────────────────
 
@@ -15,6 +15,8 @@ class TrattoError(Exception):
             apart, e.g. the 409 on ``campaigns.send`` / ``campaigns.unschedule``.
         docs: Link to the error documentation, when the API sends one, else
             ``None``.
+        details: Per-field problems on a 422 ``VALIDATION_ERROR``, as sent by
+            the API (e.g. ``[{"path": "/emails/3/to", ...}]``), else ``None``.
     """
 
     def __init__(
@@ -25,12 +27,14 @@ class TrattoError(Exception):
         *,
         suggestion: str | None = None,
         docs: str | None = None,
+        details: list[dict] | None = None,
     ) -> None:
         super().__init__(message)
         self.code = code
         self.status_code = status_code
         self.suggestion = suggestion
         self.docs = docs
+        self.details = details
 
 
 # ── Email types ───────────────────────────────────────────────────────────────
@@ -96,6 +100,39 @@ class SendEmailOptions:
     idempotency_key: str | None = None
     """UUID for idempotent sends. Duplicate requests with the same key return
     the original response without sending a second email."""
+
+
+class BatchEmailError(TypedDict):
+    """Why one item of a batch was not accepted."""
+
+    code: str
+    message: str
+
+
+class _BatchEmailBase(TypedDict):
+    status: Literal["queued", "failed"]
+    to: list[str]
+
+
+class BatchEmailResult(_BatchEmailBase, total=False):
+    """One item of a batch response, in request order.
+
+    ``id`` is present only when ``status == "queued"``, ``error`` only when
+    ``status == "failed"``.
+    """
+
+    id: str
+    error: BatchEmailError
+
+
+class SendBatchResult(TypedDict):
+    """Payload of the 202 returned by ``emails.send_batch``."""
+
+    batchId: str
+    livemode: bool
+    accepted: int
+    failed: int
+    emails: list[BatchEmailResult]
 
 
 # ── Contact types ─────────────────────────────────────────────────────────────

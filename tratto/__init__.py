@@ -1,11 +1,14 @@
 from .client import Tratto
 from .types import (
     AudienceRule,
+    BatchEmailError,
+    BatchEmailResult,
     CreateAudienceOptions,
     CreateCampaignOptions,
     CreateContactOptions,
     CreateTemplateOptions,
     CreateWebhookOptions,
+    SendBatchResult,
     SendEmailOptions,
     TrattoError,
     UpdateContactOptions,
@@ -17,6 +20,9 @@ __all__ = [
     "TrattoError",
     # Emails
     "SendEmailOptions",
+    "SendBatchResult",
+    "BatchEmailResult",
+    "BatchEmailError",
     # Contacts
     "CreateContactOptions",
     "UpdateContactOptions",

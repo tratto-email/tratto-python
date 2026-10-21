@@ -1,6 +1,39 @@
 
 from .._http import HttpClient
-from ..types import SendEmailOptions
+from ..types import SendBatchResult, SendEmailOptions
+
+
+def _email_body(options: SendEmailOptions) -> dict:
+    """Map one :class:`SendEmailOptions` to its JSON body (shared by send and send_batch)."""
+    body: dict = {
+        "to": options.to,
+        "subject": options.subject,
+    }
+    if options.from_ is not None:
+        body["from"] = options.from_
+    if options.html is not None:
+        body["html"] = options.html
+    if options.markdown is not None:
+        body["markdown"] = options.markdown
+    if options.text is not None:
+        body["text"] = options.text
+    if options.reply_to is not None:
+        body["replyTo"] = options.reply_to
+    if options.cc is not None:
+        body["cc"] = options.cc
+    if options.bcc is not None:
+        body["bcc"] = options.bcc
+    if options.headers is not None:
+        body["headers"] = options.headers
+    if options.tags is not None:
+        body["tags"] = options.tags
+    if options.template_id is not None:
+        body["templateId"] = options.template_id
+    if options.variables is not None:
+        body["variables"] = options.variables
+    if options.scheduled_at is not None:
+        body["scheduledAt"] = options.scheduled_at
+    return body
 
 
 class EmailsResource:
@@ -25,34 +58,7 @@ class EmailsResource:
             ))
             print(result["id"])  # email_…
         """
-        body: dict = {
-            "to": options.to,
-            "subject": options.subject,
-        }
-        if options.from_ is not None:
-            body["from"] = options.from_
-        if options.html is not None:
-            body["html"] = options.html
-        if options.markdown is not None:
-            body["markdown"] = options.markdown
-        if options.text is not None:
-            body["text"] = options.text
-        if options.reply_to is not None:
-            body["replyTo"] = options.reply_to
-        if options.cc is not None:
-            body["cc"] = options.cc
-        if options.bcc is not None:
-            body["bcc"] = options.bcc
-        if options.headers is not None:
-            body["headers"] = options.headers
-        if options.tags is not None:
-            body["tags"] = options.tags
-        if options.template_id is not None:
-            body["templateId"] = options.template_id
-        if options.variables is not None:
-            body["variables"] = options.variables
-        if options.scheduled_at is not None:
-            body["scheduledAt"] = options.scheduled_at
+        body = _email_body(options)
 
         extra_headers: dict[str, str] = {}
         if options.idempotency_key:
@@ -62,6 +68,52 @@ class EmailsResource:
             "POST", "/v1/emails", body=body, extra_headers=extra_headers
         )
         return result.get("data", result)
+
+    def send_batch(
+        self, emails: list[SendEmailOptions], *, idempotency_key: str | None = None
+    ) -> SendBatchResult:
+        """Send up to 100 transactional emails in one request.
+
+        Each item takes the same options as :meth:`send`. ``scheduled_at`` is
+        not supported in a batch (the API answers 422 with the item's path in
+        ``TrattoError.details``), and the idempotency key covers the whole
+        batch: pass it here, not on the items.
+
+        Always returns the 202 payload, also when some items failed: check
+        ``result["failed"]`` and resend only the items with
+        ``status == "failed"`` in a new batch with a **new** key. After a 503
+        or 500 nothing was sent and retrying with the **same** key is safe.
+
+        Raises :class:`~tratto.TrattoError` on any non-2xx response, and
+        ``ValueError`` if an item carries its own ``idempotency_key``.
+
+        Example::
+
+            result = client.emails.send_batch(
+                [SendEmailOptions(to="a@example.com", subject="Hi", html="<p>Hi</p>")],
+                idempotency_key=str(uuid.uuid4()),
+            )
+            retry = [e for e in result["emails"] if e["status"] == "failed"]
+        """
+        for i, options in enumerate(emails):
+            if options.idempotency_key:
+                raise ValueError(
+                    f"emails[{i}].idempotency_key is not supported in a batch: the key covers "
+                    "the whole batch, pass it as send_batch(..., idempotency_key=...)"
+                )
+
+        extra_headers: dict[str, str] = {}
+        if idempotency_key:
+            extra_headers["Idempotency-Key"] = idempotency_key
+
+        result = self._http._request(
+            "POST",
+            "/v1/emails/batch",
+            body={"emails": [_email_body(o) for o in emails]},
+            extra_headers=extra_headers,
+        )
+        data: SendBatchResult = result.get("data", result)
+        return data
 
     def list(
         self,

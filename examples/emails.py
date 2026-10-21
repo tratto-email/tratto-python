@@ -5,6 +5,7 @@ Run:
 """
 
 import os
+import uuid
 
 from tratto import SendEmailOptions, Tratto, TrattoError
 
@@ -51,6 +52,21 @@ tratto.emails.send(
         idempotency_key="6f9619ff-8b86-d011-b42d-00c04fc964ff",
     )
 )
+
+# ── 2b. Send a batch (up to 100) ──────────────────────────────────────────────
+# One idempotency key for the whole batch. Failed items come back in the 202
+# instead of raising: resend only those, with a new key.
+batch = tratto.emails.send_batch(
+    [
+        SendEmailOptions(to=to, subject="Your receipt", text="Thanks for your order.")
+        for to in ("delivered@simulator.tratto.email", "bounced@simulator.tratto.email")
+    ],
+    idempotency_key=str(uuid.uuid4()),
+)
+print("batch", batch["batchId"], "accepted:", batch["accepted"], "failed:", batch["failed"])
+for item in batch["emails"]:
+    if item["status"] == "failed":
+        print("  failed:", item["to"], item["error"]["code"])
 
 # ── 3. Read the email back, plus its delivery timeline ────────────────────────
 email = tratto.emails.get(email_id)

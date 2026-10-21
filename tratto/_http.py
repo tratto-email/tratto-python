@@ -18,7 +18,7 @@ def _tratto_error(e: HTTPError) -> TrattoError:
     """Turn an HTTP error response into a :class:`TrattoError`.
 
     Both request paths go through here, so a field read once is read by the
-    whole SDK. ``suggestion`` and ``docs`` are optional in the API payload:
+    whole SDK. ``suggestion``, ``docs`` and ``details`` are optional in the API payload:
     absent means ``None``, never an empty string.
     """
     try:
@@ -31,6 +31,7 @@ def _tratto_error(e: HTTPError) -> TrattoError:
         e.code,
         suggestion=err.get("suggestion"),
         docs=err.get("docs"),
+        details=err.get("details"),
     )
 
 

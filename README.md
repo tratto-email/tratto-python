@@ -180,6 +180,32 @@ result = client.emails.send(SendEmailOptions(
 ))
 ```
 
+### Send a batch
+
+Up to 100 emails in one request. Each item takes the same options as `send`,
+except `scheduled_at` (422 from the API). The idempotency key covers the whole
+batch, so it goes on the call, not on the items. Requires 2.1.0 or later.
+
+```python
+import uuid
+
+result = client.emails.send_batch(
+    [
+        SendEmailOptions(to="alice@example.com", subject="Your receipt", html="<p>…</p>"),
+        SendEmailOptions(to="bob@example.com", subject="Your receipt", html="<p>…</p>"),
+    ],
+    idempotency_key=str(uuid.uuid4()),
+)
+print(result["accepted"], result["failed"])  # 2 0
+for item in result["emails"]:  # same order as the request
+    if item["status"] == "failed":
+        print(item["to"], item["error"]["code"])
+```
+
+A batch with failed items still returns 202: it is not raised. Resend only the
+failed items, in a new batch with a **new** key. After a `503` or `500`
+`TrattoError` nothing was sent, and retrying with the **same** key is safe.
+
 ### List emails
 
 ```python
@@ -528,7 +554,12 @@ except TrattoError as e:
     print(e.status_code)  # HTTP status, e.g. 404
     print(e.suggestion)   # what to do about it, or None if the API sends none
     print(e.docs)         # link to the error docs, or None
+    print(e.details)      # per-field problems on a 422, or None
 ```
+
+On a 422 `VALIDATION_ERROR`, `details` lists what is wrong and where, e.g.
+`e.details[0]["path"] == "/emails/3/to"` for the fourth item of a batch.
+Requires 2.1.0 or later.
 
 `suggestion` and `docs` are whatever the API sent, and are `None` when it sent
 nothing — never an empty string. `suggestion` is the field to read where one
