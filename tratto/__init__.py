@@ -1,5 +1,6 @@
 from .client import Tratto
 from .types import (
+    Attachment,
     AudienceRule,
     BatchEmailError,
     BatchEmailResult,
@@ -8,6 +9,8 @@ from .types import (
     CreateContactOptions,
     CreateTemplateOptions,
     CreateWebhookOptions,
+    EmailAttachment,
+    FailedEventData,
     SendBatchResult,
     SendEmailOptions,
     TrattoError,
@@ -23,6 +26,9 @@ __all__ = [
     "SendBatchResult",
     "BatchEmailResult",
     "BatchEmailError",
+    "EmailAttachment",
+    # Attachments
+    "Attachment",
     # Contacts
     "CreateContactOptions",
     "UpdateContactOptions",
@@ -36,6 +42,7 @@ __all__ = [
     "CreateCampaignOptions",
     # Webhooks
     "CreateWebhookOptions",
+    "FailedEventData",
 ]
 
 from ._http import _SDK_VERSION

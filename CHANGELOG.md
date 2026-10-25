@@ -3,6 +3,23 @@
 Releases before 2.0.0 are described in the
 [GitHub releases](https://github.com/tratto-email/tratto-python/releases).
 
+## Unreleased
+
+### Added
+
+- `attachments.upload(content, *, filename, content_type)`,
+  `attachments.get(id)` and `attachments.delete(id)` (`/v1/attachments`).
+  `content` is `bytes` or a binary file object, sent as raw bytes and never
+  JSON-encoded, also for `application/json`. Non-ASCII filenames are sent as
+  `filename*=UTF-8''…` (RFC 6266 / RFC 5987). New types: `Attachment`,
+  `EmailAttachment` (#55).
+- `SendEmailOptions.attachments` (`[{"id": ...}]`), accepted by
+  `emails.send` and `emails.send_batch`. `emails.get` returns `attachments`
+  and, on failed emails, `failureReason` (an open set, e.g.
+  `attachment_unavailable`) (#55).
+- `WebhookEventType` includes `"failed"`; its `data` is typed as
+  `FailedEventData` (`{reason, error}`) (#55).
+
 ## 2.1.0
 
 ### Added

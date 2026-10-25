@@ -31,6 +31,8 @@ def _email_body(options: SendEmailOptions) -> dict:
         body["templateId"] = options.template_id
     if options.variables is not None:
         body["variables"] = options.variables
+    if options.attachments is not None:
+        body["attachments"] = options.attachments
     if options.scheduled_at is not None:
         body["scheduledAt"] = options.scheduled_at
     return body
@@ -162,7 +164,15 @@ class EmailsResource:
         )
 
     def get(self, email_id: str) -> dict:
-        """Get full details for a single email, including inline delivery events."""
+        """Get full details for a single email, including inline delivery events.
+
+        ``data["attachments"]`` lists the files sent with it
+        (:class:`~tratto.EmailAttachment`). A failed email carries
+        ``data["failureReason"]`` (e.g. ``"template_not_found"`` or
+        ``"attachment_unavailable"``), the same code as ``reason`` of the
+        ``failed`` webhook event; absent on emails that failed before the
+        field existed. The set is open: handle unknown values.
+        """
         return self._http._request("GET", f"/v1/emails/{email_id}")
 
     def get_events(self, email_id: str) -> dict:

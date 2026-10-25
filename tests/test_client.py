@@ -98,6 +98,7 @@ class TestClientInit:
         assert client.flows is not None
         assert client.analytics is not None
         assert client.workspace is not None
+        assert client.attachments is not None
 
     def test_does_not_expose_api_keys(self):
         # API keys are issued from the dashboard, never from application code —
