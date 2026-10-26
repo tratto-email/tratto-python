@@ -1,6 +1,7 @@
 from ._http import DEFAULT_BASE_URL, HttpClient
 from .resources import (
     AnalyticsResource,
+    AttachmentsResource,
     AudiencesResource,
     CampaignsResource,
     ContactsResource,
@@ -50,6 +51,9 @@ class Tratto:
 
         self.templates: TemplatesResource = TemplatesResource(http)
         """Manage reusable email templates with version history."""
+
+        self.attachments: AttachmentsResource = AttachmentsResource(http)
+        """Upload files to attach to emails."""
 
         self.domains: DomainsResource = DomainsResource(http)
         """Register and verify sender domains."""

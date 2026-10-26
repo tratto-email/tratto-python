@@ -1,4 +1,5 @@
 from .analytics import AnalyticsResource
+from .attachments import AttachmentsResource
 from .audiences import AudiencesResource
 from .campaigns import CampaignsResource
 from .contacts import ContactsResource
@@ -11,6 +12,7 @@ from .workspace import WorkspaceResource
 
 __all__ = [
     "AnalyticsResource",
+    "AttachmentsResource",
     "AudiencesResource",
     "CampaignsResource",
     "ContactsResource",

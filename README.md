@@ -232,6 +232,39 @@ for event in events["data"]:
     print(event["type"], event["occurredAt"])
 ```
 
+A failed email carries `failureReason` (for example `template_not_found` or
+`attachment_unavailable`), the same code as `data.reason` of the `failed`
+webhook event. The set is open: handle unknown values.
+
+### Attachments
+
+Requires `tratto-email` 2.2.0 or later, and a paid plan (the Free plan answers
+403 `PLAN_UPGRADE_REQUIRED`). Upload the file first, then reference it by id
+from `emails.send` or `emails.send_batch`. A full workspace storage answers
+429 `QUOTA_EXCEEDED`: delete attachments you no longer need.
+
+```python
+with open("invoice.pdf", "rb") as f:
+    file = client.attachments.upload(
+        f, filename="invoice.pdf", content_type="application/pdf"
+    )
+
+client.emails.send(SendEmailOptions(
+    to="user@example.com",
+    subject="Your invoice",
+    html="<p>Attached.</p>",
+    attachments=[{"id": file["id"]}],
+))
+
+meta = client.attachments.get(file["id"])  # metadata only, never the bytes
+client.attachments.delete(file["id"])
+```
+
+The content can be `bytes` or a binary file object. Non-ASCII filenames are
+supported. Live attachments expire (`expiresAt`); an email queued with an
+attachment that was deleted or expired fails with
+`failureReason == "attachment_unavailable"`.
+
 ---
 
 ## Contacts
@@ -476,6 +509,11 @@ def verify_webhook_signature(payload: bytes, signature: str, secret: str) -> boo
     expected = hmac.new(secret.encode(), payload, hashlib.sha256).hexdigest()
     return hmac.compare_digest(expected, signature)
 ```
+
+The `failed` event (an email that was not sent) is delivered only to webhooks
+that list it in `events`. Its `data` is `{"reason", "error"}`, typed as
+`FailedEventData`; `reason` is the same code as `failureReason` on
+`emails.get`.
 
 ---
 
@@ -843,6 +881,7 @@ def request_password_reset():
 | `client.contacts` | Create, update, and import contacts |
 | `client.audiences` | Create and manage audience segments |
 | `client.templates` | Manage reusable email templates |
+| `client.attachments` | Upload files to attach to emails |
 | `client.domains` | Register and verify sender domains |
 | `client.campaigns` | Create, send, and track marketing campaigns |
 | `client.webhooks` | Register endpoints and inspect delivery history |

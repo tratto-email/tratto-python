@@ -94,6 +94,13 @@ class SendEmailOptions:
     variables: dict[str, object] | None = None
     """Template variables (used with *template_id*)."""
 
+    attachments: list[dict[str, str]] | None = None
+    """Files uploaded with ``attachments.upload``, by id, each at most once:
+    ``[{"id": "att_…"}]``. Content plus attachments must fit the size limit
+    (422). Not available on the Free plan (403 ``PLAN_UPGRADE_REQUIRED``). An
+    id of another workspace is 404; an attachment of the other mode
+    (live/test), or one expiring less than an hour after the send, is 422."""
+
     scheduled_at: str | None = None
     """ISO-8601 datetime to delay delivery. Omit to send immediately."""
 
@@ -133,6 +140,35 @@ class SendBatchResult(TypedDict):
     accepted: int
     failed: int
     emails: list[BatchEmailResult]
+
+
+class EmailAttachment(TypedDict):
+    """One item of ``attachments`` on ``emails.get``, as it was when the email
+    was accepted."""
+
+    id: str
+    filename: str
+    contentType: str
+    size: int
+
+
+# ── Attachment types ──────────────────────────────────────────────────────────
+
+class Attachment(TypedDict):
+    """Metadata returned by ``attachments.upload`` and ``attachments.get``."""
+
+    id: str
+    """``att_`` followed by 21 characters."""
+    filename: str
+    """As the recipient will see it, after sanitising."""
+    contentType: str
+    size: int
+    """Bytes."""
+    sha256: str
+    """Hex SHA-256 of the bytes."""
+    livemode: bool
+    expiresAt: str
+    """After this instant the attachment can no longer be sent."""
 
 
 # ── Contact types ─────────────────────────────────────────────────────────────
@@ -265,8 +301,17 @@ class CreateCampaignOptions:
 # ── Webhook types ─────────────────────────────────────────────────────────────
 
 WebhookEventType = Literal[
-    "sent", "delivered", "opened", "clicked", "bounced", "complained", "unsubscribed"
+    "sent", "delivered", "opened", "clicked", "bounced", "complained", "unsubscribed", "failed"
 ]
+
+
+class FailedEventData(TypedDict):
+    """``data`` of a ``failed`` webhook event (the email was not sent)."""
+
+    reason: str
+    """Same code as ``failureReason`` on ``emails.get``, e.g.
+    ``"attachment_unavailable"``. An open set: handle unknown values."""
+    error: str
 
 
 @dataclass(kw_only=True)
@@ -280,5 +325,7 @@ class CreateWebhookOptions:
     """Event types to subscribe to. At least one required.
 
     Valid values: ``sent``, ``delivered``, ``opened``, ``clicked``,
-    ``bounced``, ``complained``, ``unsubscribed``.
+    ``bounced``, ``complained``, ``unsubscribed``, ``failed``. ``failed`` (the
+    email was not sent, ``data`` is :class:`FailedEventData`) is delivered
+    only to webhooks that list it.
     """
