@@ -3,7 +3,7 @@
 Releases before 2.0.0 are described in the
 [GitHub releases](https://github.com/tratto-email/tratto-python/releases).
 
-## Unreleased
+## 2.2.0
 
 ### Added
 
