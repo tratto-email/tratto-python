@@ -1,5 +1,5 @@
 
-from .._http import HttpClient
+from .._http import HttpClient, _seg
 from ..types import CreateContactOptions, UpdateContactOptions
 
 
@@ -83,7 +83,7 @@ class ContactsResource:
             body["tags"] = options.tags
         if options.custom_fields is not None:
             body["customFields"] = options.custom_fields
-        return self._http._request("PATCH", f"/v1/contacts/{contact_id}", body=body)
+        return self._http._request("PATCH", f"/v1/contacts/{_seg(contact_id)}", body=body)
 
     def import_csv(self, csv_text: str) -> dict:
         """Import contacts from CSV text (async — returns a job ID to poll).
@@ -127,4 +127,4 @@ class ContactsResource:
                 }
             }
         """
-        return self._http._request("GET", f"/v1/contacts/import/{job_id}")
+        return self._http._request("GET", f"/v1/contacts/import/{_seg(job_id)}")

@@ -3,6 +3,19 @@
 Releases before 2.0.0 are described in the
 [GitHub releases](https://github.com/tratto-email/tratto-python/releases).
 
+## Unreleased
+
+### Added
+
+- `timeout` option on `Tratto(...)`, in seconds, default 60. A request that
+  exceeds it raises `TrattoError` with `code="timeout"` and `status_code=0`.
+  Before, a hung connection blocked the caller indefinitely (#37).
+
+### Fixed
+
+- Ids in URL paths are percent-encoded as a single segment, so an id that
+  contains `/`, `?` or `#` can no longer change the route called (#46).
+
 ## 2.2.0
 
 ### Added

@@ -2,7 +2,7 @@ import re
 from typing import BinaryIO
 from urllib.parse import quote
 
-from .._http import HttpClient
+from .._http import HttpClient, _seg
 from ..types import Attachment
 
 
@@ -61,7 +61,7 @@ class AttachmentsResource:
 
     def get(self, attachment_id: str) -> Attachment:
         """Get an attachment's metadata. The bytes are never served back."""
-        result = self._http._request("GET", f"/v1/attachments/{attachment_id}")
+        result = self._http._request("GET", f"/v1/attachments/{_seg(attachment_id)}")
         data: Attachment = result.get("data", result)
         return data
 
@@ -71,4 +71,4 @@ class AttachmentsResource:
         Emails already queued with it fail with
         ``failureReason == "attachment_unavailable"``.
         """
-        self._http._request("DELETE", f"/v1/attachments/{attachment_id}")
+        self._http._request("DELETE", f"/v1/attachments/{_seg(attachment_id)}")

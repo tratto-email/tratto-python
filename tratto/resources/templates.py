@@ -1,5 +1,5 @@
 
-from .._http import HttpClient
+from .._http import HttpClient, _seg
 from ..types import CreateTemplateOptions, UpdateTemplateOptions
 
 
@@ -51,7 +51,7 @@ class TemplatesResource:
 
     def get(self, template_id: str) -> dict:
         """Get a single template with its current HTML."""
-        return self._http._request("GET", f"/v1/templates/{template_id}")
+        return self._http._request("GET", f"/v1/templates/{_seg(template_id)}")
 
     def update(self, template_id: str, options: UpdateTemplateOptions) -> dict:
         """Update a template.
@@ -68,7 +68,7 @@ class TemplatesResource:
             body["markdown"] = options.markdown
         if options.status is not None:
             body["status"] = options.status
-        return self._http._request("PATCH", f"/v1/templates/{template_id}", body=body)
+        return self._http._request("PATCH", f"/v1/templates/{_seg(template_id)}", body=body)
 
     def delete(self, template_id: str) -> None:
         """Permanently delete a template.
@@ -76,7 +76,7 @@ class TemplatesResource:
         This is irreversible. Campaigns referencing this template will fail if
         they haven't been sent yet.
         """
-        self._http._request("DELETE", f"/v1/templates/{template_id}")
+        self._http._request("DELETE", f"/v1/templates/{_seg(template_id)}")
 
     def list_versions(self, template_id: str) -> dict:
         """List all saved versions of a template (most recent first, max 20).
@@ -85,7 +85,7 @@ class TemplatesResource:
 
             {"data": [{"version": int, "savedAt": str}, ...]}
         """
-        return self._http._request("GET", f"/v1/templates/{template_id}/versions")
+        return self._http._request("GET", f"/v1/templates/{_seg(template_id)}/versions")
 
     def get_version(self, template_id: str, version: int) -> dict:
         """Get the HTML for a specific template version.
@@ -95,7 +95,7 @@ class TemplatesResource:
             {"data": {"version": int, "html": str, "savedAt": str}}
         """
         return self._http._request(
-            "GET", f"/v1/templates/{template_id}/versions/{version}"
+            "GET", f"/v1/templates/{_seg(template_id)}/versions/{_seg(version)}"
         )
 
     def test_send(
@@ -111,6 +111,6 @@ class TemplatesResource:
         """
         return self._http._request(
             "POST",
-            f"/v1/templates/{template_id}/test-send",
+            f"/v1/templates/{_seg(template_id)}/test-send",
             body={"to": to, "variables": variables or {}},
         )
