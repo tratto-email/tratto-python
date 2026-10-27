@@ -58,12 +58,11 @@ detail = tratto.flows.get(flow_id)["data"]
 print(detail["name"], detail["status"], "enrollments:", detail["enrollments"])
 
 # ── 4. List — status is draft, active or inactive ─────────────────────────────
-page = tratto.flows.list(status="active", limit=25)
-print("active flows:", len(page["data"]))
+# The API has no status filter: filter the page yourself.
+page = tratto.flows.list(limit=25)
+print("active flows:", sum(1 for f in page["data"] if f["status"] == "active"))
 if page["pagination"]["hasMore"]:
-    page = tratto.flows.list(
-        status="active", limit=25, after=page["pagination"]["nextCursor"]
-    )
+    page = tratto.flows.list(limit=25, after=page["pagination"]["nextCursor"])
 
 
 def go_live_and_back(flow_id: str) -> None:

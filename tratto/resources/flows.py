@@ -1,4 +1,6 @@
 
+import warnings
+
 from .._http import HttpClient, _seg
 
 
@@ -25,11 +27,24 @@ class FlowsResource:
         after: str | None = None,
         status: str | None = None,
     ) -> dict:
-        """List flows.
+        """List flows, newest first, paginated with ``limit`` and ``after``.
+
+        Each flow's ``status`` is ``draft``, ``active`` or ``inactive``.
 
         Args:
-            status: Filter by ``draft``, ``active`` or ``paused``.
+            status: Deprecated and ignored by the API, which returns flows of
+                every status. Filter on ``status`` in the response instead.
+                Passing it emits a ``DeprecationWarning``; it will be removed
+                in the next major version.
         """
+        if status is not None:
+            warnings.warn(
+                "flows.list(status=...) is deprecated: the API ignores it and "
+                "returns flows of every status. Filter on each flow's 'status' "
+                "('draft', 'active' or 'inactive') in the response instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
         return self._http._request(
             "GET",
             "/v1/flows",
