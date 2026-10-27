@@ -1,5 +1,5 @@
 
-from .._http import HttpClient
+from .._http import HttpClient, _seg
 from ..types import SendBatchResult, SendEmailOptions
 
 
@@ -173,7 +173,7 @@ class EmailsResource:
         ``failed`` webhook event; absent on emails that failed before the
         field existed. The set is open: handle unknown values.
         """
-        return self._http._request("GET", f"/v1/emails/{email_id}")
+        return self._http._request("GET", f"/v1/emails/{_seg(email_id)}")
 
     def get_events(self, email_id: str) -> dict:
         """List all delivery events for an email.
@@ -191,4 +191,4 @@ class EmailsResource:
         Event types: ``sent``, ``delivered``, ``opened``, ``clicked``,
         ``bounced``, ``complained``, ``unsubscribed``.
         """
-        return self._http._request("GET", f"/v1/emails/{email_id}/events")
+        return self._http._request("GET", f"/v1/emails/{_seg(email_id)}/events")

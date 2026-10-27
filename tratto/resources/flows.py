@@ -1,5 +1,5 @@
 
-from .._http import HttpClient
+from .._http import HttpClient, _seg
 
 
 class FlowsResource:
@@ -45,7 +45,7 @@ class FlowsResource:
 
     def get(self, flow_id: str) -> dict:
         """Get a single flow with its trigger and steps."""
-        return self._http._request("GET", f"/v1/flows/{flow_id}")
+        return self._http._request("GET", f"/v1/flows/{_seg(flow_id)}")
 
     def update(self, flow_id: str, options: dict) -> dict:
         """Update a flow's name, trigger or steps.
@@ -53,15 +53,15 @@ class FlowsResource:
         Editing an active flow does not retroactively change contacts already
         enrolled: they finish on the step list they started with.
         """
-        return self._http._request("PATCH", f"/v1/flows/{flow_id}", body=options)
+        return self._http._request("PATCH", f"/v1/flows/{_seg(flow_id)}", body=options)
 
     def delete(self, flow_id: str) -> None:
         """Permanently delete a flow."""
-        self._http._request("DELETE", f"/v1/flows/{flow_id}")
+        self._http._request("DELETE", f"/v1/flows/{_seg(flow_id)}")
 
     def activate(self, flow_id: str) -> dict:
         """Activate a flow so its trigger starts enrolling contacts."""
-        return self._http._request("POST", f"/v1/flows/{flow_id}/activate")
+        return self._http._request("POST", f"/v1/flows/{_seg(flow_id)}/activate")
 
     def deactivate(self, flow_id: str) -> dict:
         """Pause a flow.
@@ -69,4 +69,4 @@ class FlowsResource:
         The trigger stops enrolling new contacts. Contacts already mid-flow
         stay where they are.
         """
-        return self._http._request("POST", f"/v1/flows/{flow_id}/deactivate")
+        return self._http._request("POST", f"/v1/flows/{_seg(flow_id)}/deactivate")

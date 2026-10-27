@@ -1,5 +1,5 @@
 
-from .._http import HttpClient
+from .._http import HttpClient, _seg
 from ..types import CreateCampaignOptions
 
 
@@ -50,7 +50,7 @@ class CampaignsResource:
 
     def get(self, campaign_id: str) -> dict:
         """Get full campaign details including stats."""
-        return self._http._request("GET", f"/v1/campaigns/{campaign_id}")
+        return self._http._request("GET", f"/v1/campaigns/{_seg(campaign_id)}")
 
     def get_stats(self, campaign_id: str) -> dict:
         """Get delivery statistics and computed rates for a campaign.
@@ -74,7 +74,7 @@ class CampaignsResource:
                 }
             }
         """
-        return self._http._request("GET", f"/v1/campaigns/{campaign_id}/stats")
+        return self._http._request("GET", f"/v1/campaigns/{_seg(campaign_id)}/stats")
 
     def send(self, campaign_id: str, *, scheduled_at: str | None = None) -> dict:
         """Send or schedule a campaign.
@@ -92,7 +92,7 @@ class CampaignsResource:
         if scheduled_at is not None:
             body["scheduledAt"] = scheduled_at
         return self._http._request(
-            "POST", f"/v1/campaigns/{campaign_id}/send", body=body
+            "POST", f"/v1/campaigns/{_seg(campaign_id)}/send", body=body
         )
 
     def unschedule(self, campaign_id: str) -> dict:
@@ -112,7 +112,7 @@ class CampaignsResource:
                 ``suggestion`` saying so; the two cases share the ``CONFLICT``
                 code and differ only in the message.
         """
-        return self._http._request("POST", f"/v1/campaigns/{campaign_id}/unschedule")
+        return self._http._request("POST", f"/v1/campaigns/{_seg(campaign_id)}/unschedule")
 
     def pause(self, campaign_id: str) -> dict:
         """Pause a *sending* or *scheduled* campaign.
@@ -120,7 +120,7 @@ class CampaignsResource:
         Returns ``{"data": {"status": "paused"}}``.
         Resume by calling :meth:`send` again.
         """
-        return self._http._request("POST", f"/v1/campaigns/{campaign_id}/pause")
+        return self._http._request("POST", f"/v1/campaigns/{_seg(campaign_id)}/pause")
 
     def test_send(self, campaign_id: str, to: str) -> dict:
         """Send a test email for a campaign to a specific address.
@@ -132,6 +132,6 @@ class CampaignsResource:
         """
         return self._http._request(
             "POST",
-            f"/v1/campaigns/{campaign_id}/test-send",
+            f"/v1/campaigns/{_seg(campaign_id)}/test-send",
             body={"to": to},
         )

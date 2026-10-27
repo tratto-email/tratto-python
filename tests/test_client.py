@@ -2,7 +2,7 @@ import dataclasses
 import json
 from io import BytesIO
 from unittest.mock import MagicMock, patch
-from urllib.error import HTTPError
+from urllib.error import HTTPError, URLError
 
 import pytest
 
@@ -827,3 +827,64 @@ class TestErrorFields:
         # Compatibilità all'indietro: chi lo costruisce nei propri test non cambia riga.
         err = TrattoError("boom", "CONFLICT", 409)
         assert (err.code, err.status_code, err.suggestion, err.docs) == ("CONFLICT", 409, None, None)
+
+
+# ── Path encoding (#46) ───────────────────────────────────────────────────────────────────
+
+class TestPathEncoding:
+    @pytest.mark.parametrize(
+        "call, expected",
+        [
+            (lambda c: c.emails.get("a/b?c#d"), "/v1/emails/a%2Fb%3Fc%23d"),
+            (lambda c: c.domains.verify("../x"), "/v1/domains/..%2Fx/verify"),
+            (
+                lambda c: c.templates.get_version("t/1", 2),
+                "/v1/templates/t%2F1/versions/2",
+            ),
+            (
+                lambda c: c.workspace.update_member("u 1", "admin"),
+                "/v1/workspace/members/u%201",
+            ),
+            (lambda c: c.webhooks.test("w#1"), "/v1/webhooks/w%231/test"),
+        ],
+    )
+    def test_ids_are_encoded_as_one_segment(self, call, expected):
+        with patch(PATCH_URLOPEN, return_value=_mock_response({"data": {}})) as mock_open:
+            call(Tratto("tratto_live_test", base_url="https://api.test"))
+        assert mock_open.call_args[0][0].full_url == f"https://api.test{expected}"
+
+
+# ── Timeout (#37) ─────────────────────────────────────────────────────────────────────────
+
+class TestTimeout:
+    def test_default_timeout_is_30_seconds(self):
+        with patch(PATCH_URLOPEN, return_value=_mock_response({"data": {}})) as mock_open:
+            Tratto("tratto_live_test").workspace.get()
+        assert mock_open.call_args.kwargs["timeout"] == 30
+
+    def test_timeout_option_is_passed_to_every_request(self):
+        client = Tratto("tratto_live_test", timeout=5)
+        with patch(PATCH_URLOPEN, return_value=_mock_response({"data": {}})) as mock_open:
+            client.workspace.get()
+            client.attachments.upload(b"x", filename="a.txt", content_type="text/plain")
+        assert [c.kwargs["timeout"] for c in mock_open.call_args_list] == [5, 5]
+
+    def test_rejects_non_positive_timeout(self):
+        with pytest.raises(ValueError):
+            Tratto("tratto_live_test", timeout=0)
+
+    @pytest.mark.parametrize(
+        "exc", [TimeoutError("timed out"), URLError(TimeoutError("timed out"))]
+    )
+    def test_timeout_raises_tratto_error(self, exc):
+        client = Tratto("tratto_live_test", timeout=5)
+        with patch(PATCH_URLOPEN, side_effect=exc), pytest.raises(TrattoError) as info:
+            client.emails.get("e1")
+        assert info.value.code == "timeout"
+        assert info.value.status_code == 0
+
+    def test_other_network_errors_are_not_reported_as_timeout(self):
+        client = Tratto("tratto_live_test")
+        dns = URLError("Name or service not known")
+        with patch(PATCH_URLOPEN, side_effect=dns), pytest.raises(URLError):
+            client.emails.get("e1")

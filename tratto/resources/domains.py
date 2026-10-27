@@ -1,5 +1,5 @@
 
-from .._http import HttpClient
+from .._http import HttpClient, _seg
 
 
 class DomainsResource:
@@ -38,7 +38,7 @@ class DomainsResource:
 
     def get(self, domain_id: str) -> dict:
         """Get domain details, including per-record DNS verification status."""
-        return self._http._request("GET", f"/v1/domains/{domain_id}")
+        return self._http._request("GET", f"/v1/domains/{_seg(domain_id)}")
 
     def verify(self, domain_id: str) -> dict:
         """Trigger a DNS verification check for a domain.
@@ -47,11 +47,11 @@ class DomainsResource:
         object with ``status`` set to ``verified`` or ``failed`` and
         per-record ``verified`` booleans.
         """
-        return self._http._request("POST", f"/v1/domains/{domain_id}/verify")
+        return self._http._request("POST", f"/v1/domains/{_seg(domain_id)}/verify")
 
     def delete(self, domain_id: str) -> dict:
         """Remove a domain and revoke its DKIM private key.
 
         Returns ``{"data": {"id": str, "deletedAt": str}}``.
         """
-        return self._http._request("DELETE", f"/v1/domains/{domain_id}")
+        return self._http._request("DELETE", f"/v1/domains/{_seg(domain_id)}")

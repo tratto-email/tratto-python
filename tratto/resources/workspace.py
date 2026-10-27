@@ -1,7 +1,7 @@
 
 import warnings
 
-from .._http import HttpClient
+from .._http import HttpClient, _seg
 
 
 class WorkspaceResource:
@@ -105,7 +105,7 @@ class WorkspaceResource:
     def update_member(self, user_id: str, role: str) -> dict:
         """Change a member's role."""
         return self._http._request(
-            "PATCH", f"/v1/workspace/members/{user_id}", body={"role": role}
+            "PATCH", f"/v1/workspace/members/{_seg(user_id)}", body={"role": role}
         )
 
     def remove_member(self, user_id: str) -> None:
@@ -121,4 +121,4 @@ class WorkspaceResource:
             DeprecationWarning,
             stacklevel=2,
         )
-        self._http._request("DELETE", f"/v1/workspace/members/{user_id}")
+        self._http._request("DELETE", f"/v1/workspace/members/{_seg(user_id)}")

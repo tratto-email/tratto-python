@@ -1,5 +1,5 @@
 
-from .._http import HttpClient
+from .._http import HttpClient, _seg
 from ..types import CreateWebhookOptions
 
 
@@ -33,7 +33,7 @@ class WebhooksResource:
 
     def delete(self, webhook_id: str) -> None:
         """Delete a webhook."""
-        self._http._request("DELETE", f"/v1/webhooks/{webhook_id}")
+        self._http._request("DELETE", f"/v1/webhooks/{_seg(webhook_id)}")
 
     def list_deliveries(
         self,
@@ -49,7 +49,7 @@ class WebhooksResource:
         """
         return self._http._request(
             "GET",
-            f"/v1/webhooks/{webhook_id}/deliveries",
+            f"/v1/webhooks/{_seg(webhook_id)}/deliveries",
             params={"limit": limit, "after": after},
         )
 
@@ -61,7 +61,7 @@ class WebhooksResource:
 
         Returns ``{"data": {"queued": True}}``.
         """
-        return self._http._request("POST", f"/v1/webhooks/{webhook_id}/test")
+        return self._http._request("POST", f"/v1/webhooks/{_seg(webhook_id)}/test")
 
     def rotate_secret(self, webhook_id: str) -> dict:
         """Rotate the signing secret for a webhook.
@@ -71,5 +71,5 @@ class WebhooksResource:
         will fail verification.
         """
         return self._http._request(
-            "POST", f"/v1/webhooks/{webhook_id}/rotate-secret"
+            "POST", f"/v1/webhooks/{_seg(webhook_id)}/rotate-secret"
         )

@@ -1,4 +1,4 @@
-from ._http import DEFAULT_BASE_URL, HttpClient
+from ._http import DEFAULT_BASE_URL, DEFAULT_TIMEOUT, HttpClient
 from .resources import (
     AnalyticsResource,
     AttachmentsResource,
@@ -35,10 +35,18 @@ class Tratto:
             https://app.tratto.email/settings/api-keys.
         base_url: Override the API base URL. Useful for testing against a
             local or staging environment.
+        timeout: Seconds to wait for each request (connect and each read)
+            before raising :class:`TrattoError` with ``code="timeout"`` and
+            ``status_code=0``. Defaults to 30.
     """
 
-    def __init__(self, api_key: str, base_url: str = DEFAULT_BASE_URL) -> None:
-        http = HttpClient(api_key, base_url)
+    def __init__(
+        self,
+        api_key: str,
+        base_url: str = DEFAULT_BASE_URL,
+        timeout: float = DEFAULT_TIMEOUT,
+    ) -> None:
+        http = HttpClient(api_key, base_url, timeout)
 
         self.emails: EmailsResource = EmailsResource(http)
         """Send and retrieve transactional emails."""

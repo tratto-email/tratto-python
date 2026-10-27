@@ -599,6 +599,19 @@ On a 422 `VALIDATION_ERROR`, `details` lists what is wrong and where, e.g.
 `e.details[0]["path"] == "/emails/3/to"` for the fourth item of a batch.
 Requires 2.1.0 or later.
 
+### Timeouts
+
+Each request waits at most `timeout` seconds (default 30) to connect and for
+each read. When it expires the SDK raises `TrattoError` with
+`code == "timeout"` and `status_code == 0`:
+
+```python
+client = Tratto("tratto_live_…", timeout=10)
+```
+
+A timed-out request may still have reached the API: retry a send with the same
+`idempotency_key`, not a new one. Requires 2.3.0 or later.
+
 `suggestion` and `docs` are whatever the API sent, and are `None` when it sent
 nothing — never an empty string. `suggestion` is the field to read where one
 code covers several situations: both 409s on `campaigns.send` and
@@ -873,7 +886,7 @@ def request_password_reset():
 
 ## API reference
 
-### `Tratto(api_key, base_url?)`
+### `Tratto(api_key, base_url?, timeout?)`
 
 | Attribute | Description |
 |---|---|

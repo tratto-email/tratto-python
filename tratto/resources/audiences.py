@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import builtins
 
-from .._http import HttpClient
+from .._http import HttpClient, _seg
 from ..types import CreateAudienceOptions
 
 
@@ -50,7 +50,7 @@ class AudiencesResource:
 
     def get(self, audience_id: str) -> dict:
         """Get a single audience, including its segmentation rules."""
-        return self._http._request("GET", f"/v1/audiences/{audience_id}")
+        return self._http._request("GET", f"/v1/audiences/{_seg(audience_id)}")
 
     def add_contacts(self, audience_id: str, contact_ids: builtins.list[str]) -> dict:
         """Add contacts to an audience (up to 500 per call).
@@ -67,6 +67,6 @@ class AudiencesResource:
         """
         return self._http._request(
             "POST",
-            f"/v1/audiences/{audience_id}/contacts",
+            f"/v1/audiences/{_seg(audience_id)}/contacts",
             body={"contactIds": contact_ids},
         )
