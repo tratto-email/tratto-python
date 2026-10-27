@@ -28,15 +28,25 @@ print("draft", flow_id)
 # Trigger types: contact_joins_audience, contact_tag_added, contact_tag_removed,
 # email_event, manual. Step types: send_email, wait, branch, update_contact,
 # webhook_call. Both carry their parameters in `config`, whose values are
-# strings. Steps cannot be edited while the flow is active: deactivate first.
+# strings; unknown keys are ignored without an error. The keys read are:
+#   contact_joins_audience: audienceId; contact_tag_added/_removed: tagName;
+#   email_event: eventType, emailId (an omitted trigger key matches anything)
+#   send_email: templateId, subject, from, fromName, replyTo
+#   wait: delay (a number) and unit (seconds, minutes, hours, days)
+#   branch: conditionField, conditionOperator, conditionValue,
+#           trueNextStep, falseNextStep (zero-based step indexes)
+#   update_contact: action (set_field with field + value, or add_tag /
+#                   remove_tag with tag)
+#   webhook_call: url, method, secret
+# Steps cannot be edited while the flow is active: deactivate first.
 updated = tratto.flows.update(
     flow_id,
     {
         "trigger": {"type": "contact_joins_audience", "config": {"audienceId": "aud_123"}},
         "steps": [
-            {"id": "wait-an-hour", "type": "wait", "config": {"duration": "1h"}},
+            {"id": "wait-an-hour", "type": "wait", "config": {"delay": "1", "unit": "hours"}},
             {"id": "welcome", "type": "send_email", "config": {"templateId": "tpl_welcome"}},
-            {"id": "wait-3-days", "type": "wait", "config": {"duration": "3d"}},
+            {"id": "wait-3-days", "type": "wait", "config": {"delay": "3", "unit": "days"}},
             {"id": "tips", "type": "send_email", "config": {"templateId": "tpl_tips"}},
         ],
     },

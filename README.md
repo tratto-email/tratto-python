@@ -524,19 +524,21 @@ Automations that react to contact and email events. A flow only runs once it is
 until `activate` is called.
 
 ```python
-flow = client.flows.create({
-    "name": "Welcome sequence",
+# create takes only a name; trigger and steps are set with update
+flow_id = client.flows.create({"name": "Welcome sequence"})["data"]["id"]
+
+client.flows.update(flow_id, {
     "trigger": {"type": "contact_tag_added", "config": {"tagName": "signup"}},
     "steps": [
-        {"type": "send_email", "config": {"templateId": "tmpl_abc"}},
-        {"type": "wait", "config": {"delay": "2", "unit": "hours"}},
+        {"id": "welcome", "type": "send_email", "config": {"templateId": "tmpl_abc"}},
+        {"id": "wait", "type": "wait", "config": {"delay": "2", "unit": "hours"}},
     ],
 })
 
-client.flows.activate(flow["data"]["id"])
+client.flows.activate(flow_id)
 
-# Pause it — contacts already mid-flow stay where they are
-client.flows.deactivate(flow["data"]["id"])
+# Pause it: contacts already mid-flow stay where they are
+client.flows.deactivate(flow_id)
 ```
 
 ---
