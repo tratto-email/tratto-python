@@ -5,6 +5,13 @@ Releases before 2.0.0 are described in the
 
 ## Unreleased
 
+### Deprecated
+
+- `flows.list(status=...)`: the API ignores the filter and returns flows of
+  every status. Passing it now emits a `DeprecationWarning`; filter on each
+  flow's `status` (`draft`, `active` or `inactive`, not `paused`) in the
+  response instead (#60).
+
 ### Added
 
 - `timeout` option on `Tratto(...)`, in seconds, default 60. A request that

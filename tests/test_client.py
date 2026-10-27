@@ -1,5 +1,6 @@
 import dataclasses
 import json
+import warnings
 from io import BytesIO
 from unittest.mock import MagicMock, patch
 from urllib.error import HTTPError, URLError
@@ -652,11 +653,29 @@ class TestFlows:
     def setup_method(self):
         self.client = Tratto("tratto_live_test")
 
-    def test_list_passes_status_filter(self):
+    def test_list_status_is_deprecated(self):
+        # The API list route accepts only after/limit: status is ignored there.
         resp = {"data": [], "pagination": {"hasMore": False, "nextCursor": None}}
-        with patch(PATCH_URLOPEN, return_value=_mock_response(resp)) as m:
+        with (
+            patch(PATCH_URLOPEN, return_value=_mock_response(resp)),
+            pytest.warns(DeprecationWarning, match="ignores it"),
+        ):
             self.client.flows.list(status="active", limit=10)
-        assert "status=active" in m.call_args[0][0].full_url
+
+    def test_list_without_status_does_not_warn(self):
+        resp = {"data": [], "pagination": {"hasMore": False, "nextCursor": None}}
+        with (
+            patch(PATCH_URLOPEN, return_value=_mock_response(resp)) as m,
+            warnings.catch_warnings(),
+        ):
+            warnings.simplefilter("error")
+            self.client.flows.list(limit=10)
+        assert "limit=10" in m.call_args[0][0].full_url
+
+    def test_list_docstring_uses_api_status_enum(self):
+        doc = self.client.flows.list.__doc__ or ""
+        assert "paused" not in doc
+        assert "inactive" in doc
 
     def test_create_returns_the_flow(self):
         resp = {"data": {"id": "flow_abc", "status": "draft"}}
