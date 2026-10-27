@@ -601,7 +601,7 @@ Requires 2.1.0 or later.
 
 ### Timeouts
 
-Each request waits at most `timeout` seconds (default 30) to connect and for
+Each request waits at most `timeout` seconds (default 60) to connect and for
 each read. When it expires the SDK raises `TrattoError` with
 `code == "timeout"` and `status_code == 0`:
 

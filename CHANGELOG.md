@@ -7,7 +7,7 @@ Releases before 2.0.0 are described in the
 
 ### Added
 
-- `timeout` option on `Tratto(...)`, in seconds, default 30. A request that
+- `timeout` option on `Tratto(...)`, in seconds, default 60. A request that
   exceeds it raises `TrattoError` with `code="timeout"` and `status_code=0`.
   Before, a hung connection blocked the caller indefinitely (#37).
 

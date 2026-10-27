@@ -37,7 +37,7 @@ class Tratto:
             local or staging environment.
         timeout: Seconds to wait for each request (connect and each read)
             before raising :class:`TrattoError` with ``code="timeout"`` and
-            ``status_code=0``. Defaults to 30.
+            ``status_code=0``. Defaults to 60.
     """
 
     def __init__(

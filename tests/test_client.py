@@ -857,10 +857,10 @@ class TestPathEncoding:
 # ── Timeout (#37) ─────────────────────────────────────────────────────────────────────────
 
 class TestTimeout:
-    def test_default_timeout_is_30_seconds(self):
+    def test_default_timeout_is_60_seconds(self):
         with patch(PATCH_URLOPEN, return_value=_mock_response({"data": {}})) as mock_open:
             Tratto("tratto_live_test").workspace.get()
-        assert mock_open.call_args.kwargs["timeout"] == 30
+        assert mock_open.call_args.kwargs["timeout"] == 60
 
     def test_timeout_option_is_passed_to_every_request(self):
         client = Tratto("tratto_live_test", timeout=5)

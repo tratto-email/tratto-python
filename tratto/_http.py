@@ -8,7 +8,7 @@ from urllib.request import Request, urlopen
 from .types import TrattoError
 
 DEFAULT_BASE_URL = "https://api.tratto.email"
-DEFAULT_TIMEOUT = 30.0
+DEFAULT_TIMEOUT = 60.0
 try:
     _SDK_VERSION = _pkg_version("tratto-email")
 except PackageNotFoundError:  # source checkout never pip-installed
