@@ -1,10 +1,10 @@
-# Aggiornamenti delle dipendenze. Mensile e raggruppato di proposito: ogni PR
-# fa girare la CI, e il budget Actions dell'organizzazione e' di 3000 minuti al
-# mese (settembre 2026: 3075 usati, di cui 136 da questo gruppo di repo
-# pubblici, che non consumano il budget). Vedi tratto-api#457.
+# Dependency updates. Monthly and grouped on purpose: every PR runs CI, and
+# the organization's Actions budget is 3000 minutes a month (September 2026:
+# 3075 used, 136 of them by this group of public repos, which do not count
+# against the budget). See tratto-api#457.
 #
-# Le PR arrivano su `main`, che e' il branch di default: `target-branch` verso
-# un altro branch spegnerebbe i security update, che girano solo sul default.
+# PRs target `main`, the default branch: a `target-branch` pointing elsewhere
+# would turn off security updates, which only run on the default branch.
 version: 2
 updates:
   - package-ecosystem: pip
