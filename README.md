@@ -166,6 +166,24 @@ result = client.emails.send(SendEmailOptions(
 ))
 ```
 
+**Cancel or reschedule a scheduled email** (requires tratto-email 2.3.0 or
+later). Both work only while the email is still `scheduled`, otherwise the API
+answers 409 `CONFLICT`:
+
+```python
+email_id = result["id"]
+
+# Move it to a new date. Moving it to another UTC month moves its quota
+# emails too: 429 QUOTA_EXCEEDED if that month has fewer left.
+client.emails.reschedule(email_id, "2025-01-21T09:00:00Z")
+
+# Or cancel it: it is never sent and its emails go back to the month's quota.
+client.emails.cancel(email_id)
+```
+
+Both can also raise 429 `RATE_LIMITED` under contention on the account quota,
+which is safe to retry.
+
 **Idempotent sends** (safe to retry without duplicates):
 
 ```python

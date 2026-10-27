@@ -21,6 +21,12 @@ Releases before 2.0.0 are described in the
   raises `ValueError` only on an empty secret or a negative tolerance. The
   README and `examples/webhooks.py` used to sign the body alone and compare
   it to the whole header, which never matches a real delivery (#45).
+- `emails.cancel(email_id)` (`DELETE /v1/emails/{id}`) and
+  `emails.reschedule(email_id, scheduled_at)` (`PATCH /v1/emails/{id}`), for
+  emails still `scheduled`. Cancel gives the email's quota back; rescheduling
+  to another UTC month can raise `TrattoError` 429 `QUOTA_EXCEEDED`; both can
+  raise 409 `CONFLICT` once the email has left `scheduled`, and 429
+  `RATE_LIMITED`, safe to retry (#36).
 - `timeout` option on `Tratto(...)`, in seconds, default 60. A request that
   exceeds it raises `TrattoError` with `code="timeout"` and `status_code=0`.
   Before, a hung connection blocked the caller indefinitely (#37).

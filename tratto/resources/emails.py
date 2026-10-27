@@ -192,3 +192,41 @@ class EmailsResource:
         ``bounced``, ``complained``, ``unsubscribed``.
         """
         return self._http._request("GET", f"/v1/emails/{_seg(email_id)}/events")
+
+    def cancel(self, email_id: str) -> None:
+        """Cancel an email still in *scheduled* status.
+
+        The email goes to *canceled* and is never sent; its emails (one per
+        distinct recipient) go back to the quota of the month it was booked
+        on. Requires tratto-email 2.3.0 or later.
+
+        Raises:
+            TrattoError: ``CONFLICT`` (409) if the email is no longer
+                *scheduled* (already queued, sent or canceled);
+                ``NOT_FOUND`` (404); ``RATE_LIMITED`` (429) under contention
+                on the account quota, safe to retry.
+        """
+        self._http._request("DELETE", f"/v1/emails/{_seg(email_id)}")
+
+    def reschedule(self, email_id: str, scheduled_at: str) -> dict:
+        """Move a *scheduled* email to a new ISO-8601 date in the future.
+
+        Returns ``{"data": {"id": str, "scheduledAt": str}}``. Requires
+        tratto-email 2.3.0 or later.
+
+        Moving it to another UTC month moves its quota emails to that month.
+
+        Raises:
+            TrattoError: ``CONFLICT`` (409) if the email is no longer
+                *scheduled*; ``VALIDATION_ERROR`` (422) if *scheduled_at* is
+                not in the future, or an attachment would expire less than an
+                hour after it or was deleted; ``QUOTA_EXCEEDED`` (429) if the
+                target month has fewer emails left than the email has
+                recipients; ``RATE_LIMITED`` (429) under contention, safe to
+                retry; ``NOT_FOUND`` (404).
+        """
+        return self._http._request(
+            "PATCH",
+            f"/v1/emails/{_seg(email_id)}",
+            body={"scheduledAt": scheduled_at},
+        )

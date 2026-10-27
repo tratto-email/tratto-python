@@ -128,6 +128,43 @@ class TestEmails:
     def setup_method(self):
         self.client = Tratto("tratto_live_test")
 
+    def test_cancel_sends_delete_and_returns_none(self):
+        with patch(PATCH_URLOPEN, return_value=_mock_response({}, status=204)) as m:
+            assert self.client.emails.cancel("email_a/b") is None
+        req = m.call_args[0][0]
+        assert req.get_method() == "DELETE"
+        assert req.full_url == "https://api.tratto.email/v1/emails/email_a%2Fb"
+        assert req.data is None
+
+    def test_cancel_conflict_raises(self):
+        body = {"error": {"code": "CONFLICT", "message": "Only scheduled emails can be canceled."}}
+        with (
+            patch(PATCH_URLOPEN, side_effect=_http_error(body, 409)),
+            pytest.raises(TrattoError) as e,
+        ):
+            self.client.emails.cancel("email_abc")
+        assert (e.value.code, e.value.status_code) == ("CONFLICT", 409)
+
+    def test_reschedule_sends_patch_with_scheduled_at(self):
+        resp = {"data": {"id": "email_abc", "scheduledAt": "2030-01-20T09:00:00.000Z"}}
+        with patch(PATCH_URLOPEN, return_value=_mock_response(resp)) as m:
+            result = self.client.emails.reschedule("email_abc", "2030-01-20T09:00:00Z")
+        req = m.call_args[0][0]
+        assert req.get_method() == "PATCH"
+        assert req.full_url == "https://api.tratto.email/v1/emails/email_abc"
+        assert json.loads(req.data.decode()) == {"scheduledAt": "2030-01-20T09:00:00Z"}
+        assert result == resp
+
+    @pytest.mark.parametrize("code", ["QUOTA_EXCEEDED", "RATE_LIMITED"])
+    def test_reschedule_429_raises_with_its_code(self, code):
+        body = {"error": {"code": code, "message": "Too many."}}
+        with (
+            patch(PATCH_URLOPEN, side_effect=_http_error(body, 429)),
+            pytest.raises(TrattoError) as e,
+        ):
+            self.client.emails.reschedule("email_abc", "2030-01-20T09:00:00Z")
+        assert (e.value.code, e.value.status_code) == (code, 429)
+
     def test_send_email_returns_id(self):
         resp = {"data": {"id": "email_abc123"}}
         with patch(PATCH_URLOPEN, return_value=_mock_response(resp)):
