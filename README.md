@@ -497,18 +497,30 @@ client.webhooks.delete(webhook_id)
 
 ### Verifying webhook signatures
 
-Tratto signs every request with HMAC-SHA256. Always verify the signature before
-processing the payload:
+Tratto signs every delivery with HMAC-SHA256. Always verify the signature
+before processing the payload. `verify_webhook` requires tratto-email 2.3.0
+or later:
 
 ```python
-import hmac
-import hashlib
+from tratto import verify_webhook
 
-def verify_webhook_signature(payload: bytes, signature: str, secret: str) -> bool:
-    """Returns True if the signature is valid."""
-    expected = hmac.new(secret.encode(), payload, hashlib.sha256).hexdigest()
-    return hmac.compare_digest(expected, signature)
+# Flask: read the raw body, before any JSON parsing
+ok = verify_webhook(
+    request.get_data(),                       # raw bytes (str is accepted too)
+    request.headers.get("X-Tratto-Signature"),  # "t=<unix ms>,v1=<hex>"
+    os.environ["TRATTO_WEBHOOK_SECRET"],      # "whsec_...", the whole string
+)
+if not ok:
+    abort(401)
 ```
+
+It returns `True` only for an authentic delivery signed within the last 5
+minutes (`tolerance_seconds=300`, in the past or in the future), and `False`
+for a missing, malformed, stale or non-matching header. It raises `ValueError`
+only on an empty secret or a negative tolerance. The header carries more than
+one `v1` while a secret is being rotated; any match is accepted. Always pass
+the raw body: re-serialized JSON changes whitespace and key order and never
+matches.
 
 The `failed` event (an email that was not sent) is delivered only to webhooks
 that list it in `events`. Its `data` is `{"reason", "error"}`, typed as

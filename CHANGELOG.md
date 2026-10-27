@@ -14,6 +14,13 @@ Releases before 2.0.0 are described in the
 
 ### Added
 
+- `verify_webhook(payload, header, secret, *, tolerance_seconds=300)`: checks
+  the `X-Tratto-Signature` header (`t=<unix ms>,v1=<hex>`, HMAC-SHA256 of
+  `"{t}.{raw body}"`) in constant time, with a 5 minute tolerance either way.
+  Any `v1` may match, for secret rotation. Returns `False` on a bad header,
+  raises `ValueError` only on an empty secret or a negative tolerance. The
+  README and `examples/webhooks.py` used to sign the body alone and compare
+  it to the whole header, which never matches a real delivery (#45).
 - `timeout` option on `Tratto(...)`, in seconds, default 60. A request that
   exceeds it raises `TrattoError` with `code="timeout"` and `status_code=0`.
   Before, a hung connection blocked the caller indefinitely (#37).

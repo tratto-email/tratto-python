@@ -17,6 +17,7 @@ from .types import (
     UpdateContactOptions,
     UpdateTemplateOptions,
 )
+from .webhook import verify_webhook
 
 __all__ = [
     "Tratto",
@@ -43,6 +44,7 @@ __all__ = [
     # Webhooks
     "CreateWebhookOptions",
     "FailedEventData",
+    "verify_webhook",
 ]
 
 from ._http import _SDK_VERSION

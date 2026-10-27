@@ -4,11 +4,9 @@ Run:
     TRATTO_API_KEY=tratto_test_... python examples/webhooks.py
 """
 
-import hashlib
-import hmac
 import os
 
-from tratto import CreateWebhookOptions, Tratto
+from tratto import CreateWebhookOptions, Tratto, verify_webhook
 
 api_key = os.environ.get("TRATTO_API_KEY")
 if not api_key:
@@ -52,7 +50,11 @@ tratto.webhooks.delete(webhook_id)
 
 
 # ── 5. On your side: verify the signature before trusting the payload ─────────
-def is_signature_valid(raw_body: bytes, header: str, secret: str) -> bool:
-    """Compare the ``X-Tratto-Signature`` header against the raw request body."""
-    expected = hmac.new(secret.encode(), raw_body, hashlib.sha256).hexdigest()
-    return hmac.compare_digest(expected, header)
+def is_signature_valid(raw_body: bytes, header: str | None, secret: str) -> bool:
+    """Check the ``X-Tratto-Signature`` header against the raw request body.
+
+    The header is ``t=<unix ms>,v1=<hex>`` and signs ``"{t}.{raw body}"``:
+    verify_webhook parses it, rejects deliveries older than 5 minutes and
+    compares in constant time.
+    """
+    return verify_webhook(raw_body, header, secret)
