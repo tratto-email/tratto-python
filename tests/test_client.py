@@ -732,7 +732,7 @@ class TestWorkspace:
         assert m.call_args[0][0].get_method() == "PATCH"
 
     def test_update_senders_sends_only_the_type_given(self):
-        """Scrittura parziale (#20): un tipo solo, gli altri due non si toccano."""
+        """Partial write (#20): only one type is sent, the other two are left untouched."""
         resp = {"data": {"id": "tenant_abc"}}
         body = {"senders": {"marketing": {"fromEmail": "news@acme.test", "fromName": "Acme"}}}
         with patch(PATCH_URLOPEN, return_value=_mock_response(resp)) as m:
@@ -742,7 +742,7 @@ class TestWorkspace:
         assert "automation" not in sent["senders"]
 
     def test_update_senders_keeps_none_instead_of_dropping_it(self):
-        """`None` su un tipo lo rimette in eredita': non deve sparire nel JSON."""
+        """`None` on a type puts it back to inheriting the default: it must not vanish from the JSON."""
         resp = {"data": {"id": "tenant_abc"}}
         with patch(PATCH_URLOPEN, return_value=_mock_response(resp)) as m:
             self.client.workspace.update({"senders": {"marketing": None}})
@@ -790,7 +790,7 @@ class TestWorkspace:
 # ── Error payload: suggestion + docs (#24) ───────────────────────────────────────────────
 
 class TestErrorFields:
-    """`suggestion` e `docs` arrivano a chi integra, su entrambi i percorsi HTTP."""
+    """`suggestion` and `docs` reach the integrator, on both HTTP paths."""
 
     def setup_method(self):
         self.client = Tratto("tratto_live_test")
@@ -809,12 +809,12 @@ class TestErrorFields:
             pytest.raises(TrattoError) as e,
         ):
             self.client.campaigns.send("camp_abc123")
-        # Niente confronto su `message`: è il punto della issue.
+        # No assertion on `message`: that is the point of the issue.
         assert e.value.suggestion == "Wait for the probe window to expire, then send again."
         assert e.value.docs == "https://docs.tratto.email/errors"
 
     def test_raw_path_exposes_suggestion_and_docs(self):
-        # contacts.import_csv passa da _request_raw: l'altro percorso che costruisce l'errore.
+        # contacts.import_csv goes through _request_raw: the other path that builds the error.
         body = {
             "error": {
                 "code": "VALIDATION_ERROR",
@@ -832,7 +832,7 @@ class TestErrorFields:
         assert e.value.docs == "https://docs.tratto.email/errors"
 
     def test_missing_fields_are_none_not_empty_string(self):
-        # Il terzo 409 di unschedule non porta né suggestion né docs.
+        # The third 409 of unschedule carries neither suggestion nor docs.
         body = {"error": {"code": "CONFLICT", "message": "Campaign is not scheduled."}}
         with (
             patch(PATCH_URLOPEN, side_effect=_http_error(body, 409)),
@@ -843,7 +843,7 @@ class TestErrorFields:
         assert e.value.docs is None
 
     def test_three_positional_args_still_build(self):
-        # Compatibilità all'indietro: chi lo costruisce nei propri test non cambia riga.
+        # Backward compatibility: code that builds it in its own tests needs no change.
         err = TrattoError("boom", "CONFLICT", 409)
         assert (err.code, err.status_code, err.suggestion, err.docs) == ("CONFLICT", 409, None, None)
 
