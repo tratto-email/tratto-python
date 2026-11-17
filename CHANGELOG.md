@@ -9,6 +9,11 @@ Releases before 2.0.0 are described in the
 
 - `BouncedEventData` TypedDict for the `data` of a `bounced` webhook event:
   `type`, `subType`, `diagnosticCode` and `dsnStatus`, all optional (#66).
+- `py.typed` marker (PEP 561): type checkers such as mypy now use the SDK's
+  types instead of reporting `tratto` as an untyped module (#68).
+- Docstrings and README: `bounced` and `complained` events returned by
+  `emails.get` and `emails.get_events` may carry `recipient`, the address
+  that bounced or complained (#69).
 
 ## 2.3.0
 

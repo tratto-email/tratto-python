@@ -254,6 +254,11 @@ A failed email carries `failureReason` (for example `template_not_found` or
 `attachment_unavailable`), the same code as `data.reason` of the `failed`
 webhook event. The set is open: handle unknown values.
 
+`bounced` and `complained` events, in `email["data"]["events"]` and in
+`emails.get_events`, may carry `recipient`: the address that bounced or
+complained. It is absent on every other event type, so read it with
+`event.get("recipient")`.
+
 ### Attachments
 
 Requires `tratto-email` 2.2.0 or later, and a paid plan (the Free plan answers
