@@ -4,7 +4,8 @@ import time
 
 import pytest
 
-from tratto import verify_webhook
+import tratto
+from tratto import BouncedEventData, verify_webhook
 
 # Fixed vector, produced by running tratto-api's own signer
 # (functions/webhookFanout/src/index.ts signPayload, origin/main) on these inputs.
@@ -144,3 +145,13 @@ def test_configuration_errors_raise():
         verify_webhook(BODY, f"t={T},v1={V1}", "")
     with pytest.raises(ValueError, match="tolerance"):
         verify_webhook(BODY, f"t={T},v1={V1}", SECRET, tolerance_seconds=-1)
+
+
+def test_bounced_event_data_is_exported():
+    assert BouncedEventData.__optional_keys__ == {
+        "type",
+        "subType",
+        "diagnosticCode",
+        "dsnStatus",
+    }
+    assert "BouncedEventData" in tratto.__all__

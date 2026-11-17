@@ -545,6 +545,10 @@ that list it in `events`. Its `data` is `{"reason", "error"}`, typed as
 `FailedEventData`; `reason` is the same code as `failureReason` on
 `emails.get`.
 
+The `bounced` event carries `type`, `subType`, `diagnosticCode` and
+`dsnStatus` in its `data`, typed as `BouncedEventData`; every key is optional,
+so read them with `.get()`.
+
 ---
 
 ## Flows
