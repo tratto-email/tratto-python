@@ -3,6 +3,13 @@
 Releases before 2.0.0 are described in the
 [GitHub releases](https://github.com/tratto-email/tratto-python/releases).
 
+## Unreleased
+
+### Added
+
+- `BouncedEventData` TypedDict for the `data` of a `bounced` webhook event:
+  `type`, `subType`, `diagnosticCode` and `dsnStatus`, all optional (#66).
+
 ## 2.3.0
 
 ### Deprecated

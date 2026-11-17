@@ -314,6 +314,24 @@ class FailedEventData(TypedDict):
     error: str
 
 
+class BouncedEventData(TypedDict, total=False):
+    """``data`` of a ``bounced`` webhook event.
+
+    Every key is optional: read them with ``.get()``.
+    """
+
+    type: str
+    """Bounce type, usually ``"Permanent"`` or ``"Transient"``. An open set:
+    handle unknown values. Always present today."""
+    subType: str
+    """Finer category, e.g. ``"General"``. Always present today."""
+    diagnosticCode: str
+    """The receiving server's reply, with control characters removed and at
+    most 1000 characters. Third-party text: log it, don't parse it."""
+    dsnStatus: str
+    """Enhanced status code ``X.Y.Z``, e.g. ``"5.1.1"``."""
+
+
 @dataclass(kw_only=True)
 class CreateWebhookOptions:
     """Options for registering a webhook endpoint."""
@@ -327,5 +345,5 @@ class CreateWebhookOptions:
     Valid values: ``sent``, ``delivered``, ``opened``, ``clicked``,
     ``bounced``, ``complained``, ``unsubscribed``, ``failed``. ``failed`` (the
     email was not sent, ``data`` is :class:`FailedEventData`) is delivered
-    only to webhooks that list it.
+    only to webhooks that list it. ``bounced`` data is :class:`BouncedEventData`.
     """

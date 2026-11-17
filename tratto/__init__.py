@@ -4,6 +4,7 @@ from .types import (
     AudienceRule,
     BatchEmailError,
     BatchEmailResult,
+    BouncedEventData,
     CreateAudienceOptions,
     CreateCampaignOptions,
     CreateContactOptions,
@@ -43,6 +44,7 @@ __all__ = [
     "CreateCampaignOptions",
     # Webhooks
     "CreateWebhookOptions",
+    "BouncedEventData",
     "FailedEventData",
     "verify_webhook",
 ]
