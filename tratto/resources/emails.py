@@ -172,6 +172,10 @@ class EmailsResource:
         ``"attachment_unavailable"``), the same code as ``reason`` of the
         ``failed`` webhook event; absent on emails that failed before the
         field existed. The set is open: handle unknown values.
+
+        Each ``bounced`` or ``complained`` event in ``data["events"]`` may
+        carry ``recipient`` (string), the address that bounced or complained;
+        it is absent on every other event type.
         """
         return self._http._request("GET", f"/v1/emails/{_seg(email_id)}")
 
@@ -190,6 +194,10 @@ class EmailsResource:
 
         Event types: ``sent``, ``delivered``, ``opened``, ``clicked``,
         ``bounced``, ``complained``, ``unsubscribed``.
+
+        ``bounced`` and ``complained`` events may carry ``recipient``
+        (string), the address that bounced or complained; it is absent on
+        every other event type.
         """
         return self._http._request("GET", f"/v1/emails/{_seg(email_id)}/events")
 
